@@ -44,7 +44,7 @@ export function TeacherSidebar() {
     },
     {
       title: "Pemantauan Siswa",
-      href: "/teacher/students",
+      href: "/teacher/students/progress",
       icon: Users,
     },
     {

@@ -1,121 +1,363 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ArrowLeft, CheckCircle, ChevronLeft, ChevronRight, FileText, GraduationCap } from "lucide-react"
-import { VideoPlayer } from "@/components/video-player"
+import { useState, useEffect, use } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  ArrowLeft,
+  Play,
+  CheckCircle,
+  Users,
+  Calendar,
+  Loader2,
+  AlertCircle,
+  TestTube,
+} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
+import { useApi } from "@/hooks/use-api";
 
-export default function MaterialDetail({ params }: { params: { id: string } }) {
-  const [activeVideoIndex, setActiveVideoIndex] = useState(0)
-  const [activeTab, setActiveTab] = useState("videos")
+interface MaterialVideo {
+  id: number;
+  title: string;
+  description: string;
+  video_path: string;
+  video_url: string;
+  stream_url: string;
+  direct_url?: string;
+  video_filename?: string;
+  video_type?: string;
+  order: number;
+  is_completed?: boolean;
+  created_at: string;
+}
 
-  // Mock data for the material
-  const material = {
-    id: params.id,
-    title:
-      params.id === "1"
-        ? "Bahasa Isyarat Huruf"
-        : params.id === "2"
-          ? "Bahasa Isyarat Angka"
-          : "Bahasa Isyarat Sehari-hari",
-    description:
-      params.id === "1"
-        ? "Kumpulan video bahasa isyarat untuk huruf A-Z"
-        : params.id === "2"
-          ? "Kumpulan video bahasa isyarat untuk angka 0-9"
-          : "Kumpulan video bahasa isyarat untuk percakapan sehari-hari",
-    totalVideos: params.id === "1" ? 26 : params.id === "2" ? 10 : 15,
-    watchedVideos: params.id === "1" ? 20 : params.id === "2" ? 10 : 0,
-    progress: params.id === "1" ? 77 : params.id === "2" ? 100 : 0,
-    videos:
-      params.id === "1"
-        ? [
-            { id: "1", title: "Huruf A", watched: true, thumbnail: "/placeholder.svg?height=200&width=300" },
-            { id: "2", title: "Huruf B", watched: true, thumbnail: "/placeholder.svg?height=200&width=300" },
-            { id: "3", title: "Huruf C", watched: true, thumbnail: "/placeholder.svg?height=200&width=300" },
-            { id: "4", title: "Huruf D", watched: true, thumbnail: "/placeholder.svg?height=200&width=300" },
-            { id: "5", title: "Huruf E", watched: true, thumbnail: "/placeholder.svg?height=200&width=300" },
-            { id: "6", title: "Huruf F", watched: true, thumbnail: "/placeholder.svg?height=200&width=300" },
-            { id: "7", title: "Huruf G", watched: true, thumbnail: "/placeholder.svg?height=200&width=300" },
-            { id: "8", title: "Huruf H", watched: true, thumbnail: "/placeholder.svg?height=200&width=300" },
-            { id: "9", title: "Huruf I", watched: true, thumbnail: "/placeholder.svg?height=200&width=300" },
-            { id: "10", title: "Huruf J", watched: true, thumbnail: "/placeholder.svg?height=200&width=300" },
-            { id: "11", title: "Huruf K", watched: true, thumbnail: "/placeholder.svg?height=200&width=300" },
-            { id: "12", title: "Huruf L", watched: true, thumbnail: "/placeholder.svg?height=200&width=300" },
-            { id: "13", title: "Huruf M", watched: true, thumbnail: "/placeholder.svg?height=200&width=300" },
-            { id: "14", title: "Huruf N", watched: true, thumbnail: "/placeholder.svg?height=200&width=300" },
-            { id: "15", title: "Huruf O", watched: true, thumbnail: "/placeholder.svg?height=200&width=300" },
-            { id: "16", title: "Huruf P", watched: true, thumbnail: "/placeholder.svg?height=200&width=300" },
-            { id: "17", title: "Huruf Q", watched: true, thumbnail: "/placeholder.svg?height=200&width=300" },
-            { id: "18", title: "Huruf R", watched: true, thumbnail: "/placeholder.svg?height=200&width=300" },
-            { id: "19", title: "Huruf S", watched: true, thumbnail: "/placeholder.svg?height=200&width=300" },
-            { id: "20", title: "Huruf T", watched: true, thumbnail: "/placeholder.svg?height=200&width=300" },
-            { id: "21", title: "Huruf U", watched: false, thumbnail: "/placeholder.svg?height=200&width=300" },
-            { id: "22", title: "Huruf V", watched: false, thumbnail: "/placeholder.svg?height=200&width=300" },
-            { id: "23", title: "Huruf W", watched: false, thumbnail: "/placeholder.svg?height=200&width=300" },
-            { id: "24", title: "Huruf X", watched: false, thumbnail: "/placeholder.svg?height=200&width=300" },
-            { id: "25", title: "Huruf Y", watched: false, thumbnail: "/placeholder.svg?height=200&width=300" },
-            { id: "26", title: "Huruf Z", watched: false, thumbnail: "/placeholder.svg?height=200&width=300" },
-          ]
-        : params.id === "2"
-          ? [
-              { id: "1", title: "Angka 0", watched: true, thumbnail: "/placeholder.svg?height=200&width=300" },
-              { id: "2", title: "Angka 1", watched: true, thumbnail: "/placeholder.svg?height=200&width=300" },
-              { id: "3", title: "Angka 2", watched: true, thumbnail: "/placeholder.svg?height=200&width=300" },
-              { id: "4", title: "Angka 3", watched: true, thumbnail: "/placeholder.svg?height=200&width=300" },
-              { id: "5", title: "Angka 4", watched: true, thumbnail: "/placeholder.svg?height=200&width=300" },
-              { id: "6", title: "Angka 5", watched: true, thumbnail: "/placeholder.svg?height=200&width=300" },
-              { id: "7", title: "Angka 6", watched: true, thumbnail: "/placeholder.svg?height=200&width=300" },
-              { id: "8", title: "Angka 7", watched: true, thumbnail: "/placeholder.svg?height=200&width=300" },
-              { id: "9", title: "Angka 8", watched: true, thumbnail: "/placeholder.svg?height=200&width=300" },
-              { id: "10", title: "Angka 9", watched: true, thumbnail: "/placeholder.svg?height=200&width=300" },
-            ]
-          : [
-              { id: "1", title: "Halo", watched: false, thumbnail: "/placeholder.svg?height=200&width=300" },
-              { id: "2", title: "Selamat Pagi", watched: false, thumbnail: "/placeholder.svg?height=200&width=300" },
-              { id: "3", title: "Selamat Siang", watched: false, thumbnail: "/placeholder.svg?height=200&width=300" },
-              { id: "4", title: "Selamat Malam", watched: false, thumbnail: "/placeholder.svg?height=200&width=300" },
-              { id: "5", title: "Terima Kasih", watched: false, thumbnail: "/placeholder.svg?height=200&width=300" },
-              { id: "6", title: "Maaf", watched: false, thumbnail: "/placeholder.svg?height=200&width=300" },
-              { id: "7", title: "Sampai Jumpa", watched: false, thumbnail: "/placeholder.svg?height=200&width=300" },
-              { id: "8", title: "Apa Kabar", watched: false, thumbnail: "/placeholder.svg?height=200&width=300" },
-              { id: "9", title: "Baik", watched: false, thumbnail: "/placeholder.svg?height=200&width=300" },
-              { id: "10", title: "Tidak", watched: false, thumbnail: "/placeholder.svg?height=200&width=300" },
-              { id: "11", title: "Ya", watched: false, thumbnail: "/placeholder.svg?height=200&width=300" },
-              { id: "12", title: "Tolong", watched: false, thumbnail: "/placeholder.svg?height=200&width=300" },
-              { id: "13", title: "Saya", watched: false, thumbnail: "/placeholder.svg?height=200&width=300" },
-              { id: "14", title: "Kamu", watched: false, thumbnail: "/placeholder.svg?height=200&width=300" },
-              { id: "15", title: "Mereka", watched: false, thumbnail: "/placeholder.svg?height=200&width=300" },
-            ],
-    relatedExercises: [
-      { id: "1", title: "Latihan Huruf A-M", progress: 77 },
-      { id: "2", title: "Latihan Huruf N-Z", progress: 100 },
-    ],
-    relatedQuizzes: [{ id: "1", title: "Quiz Huruf Alfabet", score: 90 }],
-  }
+interface Material {
+  id: number;
+  title: string;
+  description: string;
+  thumbnail: string | null;
+  difficulty_level: number;
+  is_published: boolean;
+  created_at: string;
+  videos_count: number;
+  creator: {
+    id: number;
+    name: string;
+  };
+  videos: MaterialVideo[];
+}
 
-  const activeVideo = material.videos[activeVideoIndex]
+export default function StudentMaterialDetail({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { toast } = useToast();
+  const router = useRouter();
+  const resolvedParams = use(params);
+  const [material, setMaterial] = useState<Material | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedVideo, setSelectedVideo] = useState<MaterialVideo | null>(
+    null
+  );
+  const [completingVideo, setCompletingVideo] = useState<number | null>(null);
+  const [videoLoading, setVideoLoading] = useState(false);
+  const [videoError, setVideoError] = useState<string | null>(null);
+  const { get, post, put, delete: del, buildUrl } = useApi();
 
-  const handlePrevVideo = () => {
-    if (activeVideoIndex > 0) {
-      setActiveVideoIndex(activeVideoIndex - 1)
+  useEffect(() => {
+    fetchMaterial();
+  }, [resolvedParams.id]);
+
+  useEffect(() => {
+    if (selectedVideo) {
+      setVideoError(null);
+      setVideoLoading(true);
+
+      // Force video element to reload
+      const videoElement = document.querySelector("video") as HTMLVideoElement;
+      if (videoElement) {
+        videoElement.load();
+      }
     }
-  }
+  }, [selectedVideo]);
 
-  const handleNextVideo = () => {
-    if (activeVideoIndex < material.videos.length - 1) {
-      setActiveVideoIndex(activeVideoIndex + 1)
+  const fetchMaterial = async () => {
+    try {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        toast({
+          title: "Error",
+          description: "Token tidak ditemukan. Silakan login kembali.",
+          variant: "destructive",
+        });
+        router.push("/login");
+        return;
+      }
+
+      const response = await fetch(
+        buildUrl(`/api/materials/${resolvedParams.id}`),
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        }
+      );
+
+      if (response.status === 401) {
+        toast({
+          title: "Session Expired",
+          description: "Sesi Anda telah berakhir. Silakan login kembali.",
+          variant: "destructive",
+        });
+        localStorage.removeItem("token");
+        router.push("/login");
+        return;
+      }
+
+      if (response.ok) {
+        const data = await response.json();
+        setMaterial(data);
+
+        // Select the first video by default if available
+        if (data.videos && data.videos.length > 0) {
+          const sortedVideos = [...data.videos].sort(
+            (a, b) => a.order - b.order
+          );
+          setSelectedVideo(sortedVideos[0]);
+        }
+      } else {
+        toast({
+          title: "Error",
+          description: "Gagal memuat data materi",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching material:", error);
+      toast({
+        title: "Error",
+        description: "Terjadi kesalahan saat memuat data",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const handleVideoClick = (video: MaterialVideo) => {
+    console.log("🎬 Switching to video:", video.title);
+    setSelectedVideo(video);
+    setVideoError(null);
+    setVideoLoading(true);
+  };
+
+  const markVideoAsCompleted = async (videoId: number) => {
+    try {
+      setCompletingVideo(videoId);
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        buildUrl(
+          `/api/materials/${resolvedParams.id}/videos/${videoId}/complete`
+        ),
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        }
+      );
+
+      if (response.ok) {
+        // Update local state
+        setMaterial((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            videos: prev.videos.map((video) =>
+              video.id === videoId ? { ...video, is_completed: true } : video
+            ),
+          };
+        });
+
+        toast({
+          title: "Video selesai!",
+          description: "Video telah ditandai sebagai selesai.",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Gagal menandai video sebagai selesai",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error marking video as completed:", error);
+      toast({
+        title: "Error",
+        description: "Terjadi kesalahan saat menandai video",
+        variant: "destructive",
+      });
+    } finally {
+      setCompletingVideo(null);
+    }
+  };
+
+  // Generate video URLs
+  const getVideoDirectUrl = (video: MaterialVideo) => {
+    if (video?.video_path) {
+      // Parse video path: material_videos/1/1748173170_huruf-a.mp4
+      const pathParts = video.video_path.split("/");
+      const materialId = pathParts[1] || resolvedParams.id;
+      const filename = pathParts[2] || video.video_filename;
+      return buildUrl(`/video/${materialId}/${filename}`);
+    }
+    return undefined;
+  };
+
+  const getVideoStreamUrl = (video: MaterialVideo) => {
+    const token = localStorage.getItem("token");
+    return buildUrl(
+      `/api/materials/${resolvedParams.id}/videos/${video.id}/stream?token=${token}`
+    );
+  };
+
+  // Test video URLs
+  // const testVideoUrls = async () => {
+  //   if (!selectedVideo) return
+
+  //   const directUrl = getVideoDirectUrl(selectedVideo)
+  //   const streamUrl = getVideoStreamUrl(selectedVideo)
+
+  //   console.log("🧪 Testing Video URLs")
+  //   console.log("📁 Direct URL:", directUrl)
+  //   console.log("📡 Stream URL:", streamUrl)
+
+  //   let workingUrls = 0
+  //   let totalUrls = 0
+
+  //   // Test direct URL
+  //   if (directUrl) {
+  //     totalUrls++
+  //     try {
+  //       const directResponse = await fetch(directUrl, {
+  //         method: "HEAD",
+  //         mode: "cors",
+  //       })
+  //       console.log("✅ Direct response:", directResponse.status, directResponse.statusText)
+
+  //       if (directResponse.ok) {
+  //         workingUrls++
+  //         console.log("✅ Direct URL working")
+  //       } else {
+  //         console.log("❌ Direct URL failed:", directResponse.status)
+  //       }
+  //     } catch (error) {
+  //       console.log("❌ Direct URL CORS/Network error (this is normal):", error)
+  //     }
+  //   }
+
+  //   // Test stream URL
+  //   totalUrls++
+  //   try {
+  //     const token = localStorage.getItem("token")
+  //     const streamResponse = await fetch(streamUrl, {
+  //       method: "HEAD",
+  //       headers: {
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //     })
+  //     console.log("✅ Stream response:", streamResponse.status, streamResponse.statusText)
+
+  //     if (streamResponse.ok) {
+  //       workingUrls++
+  //       console.log("✅ Stream URL working")
+  //     } else {
+  //       console.log("❌ Stream URL failed:", streamResponse.status)
+  //     }
+  //   } catch (error) {
+  //     console.log("❌ Stream URL error:", error)
+  //   }
+
+  //   // Only show toast if we want to inform user
+  //   toast({
+  //     title: "URL Test Complete",
+  //     description: `Tested ${totalUrls} URLs. Check console for details.`,
+  //   })
+  // }
+
+  const getDifficultyLabel = (level: number) => {
+    const labels = ["", "Pemula", "Dasar", "Menengah", "Lanjut", "Ahli"];
+    return labels[level] || "Unknown";
+  };
+
+  const getDifficultyColor = (level: number) => {
+    const colors = [
+      "",
+      "bg-green-100 text-green-800",
+      "bg-blue-100 text-blue-800",
+      "bg-yellow-100 text-yellow-800",
+      "bg-orange-100 text-orange-800",
+      "bg-red-100 text-red-800",
+    ];
+    return colors[level] || "bg-gray-100 text-gray-800";
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("id-ID", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
+  const calculateProgress = () => {
+    if (!material?.videos.length) return 0;
+    const completedVideos = material.videos.filter(
+      (video) => video.is_completed
+    ).length;
+    return Math.round((completedVideos / material.videos.length) * 100);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
-  const handleVideoComplete = () => {
-    // In a real app, this would update the backend
-    console.log(`Marked video ${activeVideo.id} as watched`)
+  if (!material) {
+    return (
+      <div className="text-center py-12">
+        <h3 className="text-lg font-medium text-muted-foreground mb-2">
+          Materi tidak ditemukan
+        </h3>
+        <Link href="/student/materials">
+          <Button>Kembali ke Daftar Materi</Button>
+        </Link>
+      </div>
+    );
   }
+
+  const progress = calculateProgress();
+  const completedVideos = material.videos.filter(
+    (video) => video.is_completed
+  ).length;
 
   return (
     <div className="flex flex-col gap-6">
@@ -126,129 +368,277 @@ export default function MaterialDetail({ params }: { params: { id: string } }) {
           </Button>
         </Link>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">{material.title}</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            {material.title}
+          </h1>
           <p className="text-muted-foreground">{material.description}</p>
         </div>
       </div>
 
-      <div className="space-y-2">
-        <div className="flex items-center justify-between text-sm">
-          <span>
-            Kemajuan: {material.watchedVideos}/{material.totalVideos} video
-          </span>
-          <span>{material.progress}%</span>
-        </div>
-        <Progress value={material.progress} />
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <Card className="overflow-hidden">
-            <VideoPlayer
-              src="/placeholder.svg?height=500&width=800"
-              poster={activeVideo.thumbnail}
-              title={activeVideo.title}
-              onComplete={handleVideoComplete}
-            />
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div>
-                  <CardTitle>{activeVideo.title}</CardTitle>
-                  <CardDescription>
-                    Video {activeVideoIndex + 1} dari {material.videos.length}
-                  </CardDescription>
-                </div>
-                {activeVideo.watched && <CheckCircle className="h-5 w-5 text-green-500" />}
-              </div>
-            </CardHeader>
-            <CardFooter className="flex justify-between">
-              <Button variant="outline" size="icon" onClick={handlePrevVideo} disabled={activeVideoIndex === 0}>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handleNextVideo}
-                disabled={activeVideoIndex === material.videos.length - 1}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </CardFooter>
-          </Card>
-        </div>
-
-        <div>
-          <Tabs defaultValue="videos" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="videos">Video</TabsTrigger>
-              <TabsTrigger value="related">Terkait</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="videos" className="space-y-4">
-              <div className="max-h-[500px] space-y-2 overflow-y-auto pr-2">
-                {material.videos.map((video, index) => (
-                  <div
-                    key={video.id}
-                    className={`flex cursor-pointer items-center gap-3 rounded-lg border p-2 transition-colors hover:bg-muted/50 ${
-                      index === activeVideoIndex ? "border-primary bg-muted/50" : ""
-                    }`}
-                    onClick={() => setActiveVideoIndex(index)}
-                  >
-                    <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-md">
-                      <img
-                        src={video.thumbnail || "/placeholder.svg"}
-                        alt={video.title}
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{video.title}</p>
-                      <p className="text-xs text-muted-foreground">Video {index + 1}</p>
-                    </div>
-                    {video.watched && <CheckCircle className="h-4 w-4 flex-shrink-0 text-green-500" />}
+      {selectedVideo ? (
+        <div className="grid gap-6 lg:grid-cols-3">
+          {/* Material Info */}
+          <div className="lg:col-span-1">
+            <Card>
+              <CardHeader>
+                <CardTitle>Informasi Materi</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {material.thumbnail && (
+                  <div className="aspect-video rounded-md overflow-hidden">
+                    <img
+                      src={buildUrl(`/storage/${material.thumbnail}`)}
+                      alt={material.title}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
-                ))}
-              </div>
-            </TabsContent>
+                )}
 
-            <TabsContent value="related" className="space-y-4">
-              <div className="space-y-4">
-                <h3 className="font-medium">Latihan Terkait</h3>
-                {material.relatedExercises.map((exercise) => (
-                  <Link key={exercise.id} href={`/student/exercises/${exercise.id}`} className="block">
-                    <div className="flex items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/50">
-                      <FileText className="h-5 w-5 text-muted-foreground" />
-                      <div className="flex-1">
-                        <p className="font-medium">{exercise.title}</p>
-                        <div className="mt-1 flex items-center gap-2">
-                          <Progress value={exercise.progress} className="h-2 flex-1" />
-                          <span className="text-xs text-muted-foreground">{exercise.progress}%</span>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Badge
+                      className={getDifficultyColor(material.difficulty_level)}
+                    >
+                      {getDifficultyLabel(material.difficulty_level)}
+                    </Badge>
+                  </div>
+
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <Users className="h-4 w-4" />
+                      <span>{material.videos.length} video</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-4 w-4" />
+                      <span>{formatDate(material.created_at)}</span>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t">
+                    <p className="text-sm">
+                      <span className="font-medium">Dibuat oleh:</span>{" "}
+                      {material.creator.name}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Progress */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Progress</span>
+                    <span className="text-sm text-muted-foreground">
+                      {completedVideos}/{material.videos.length} selesai
+                    </span>
+                  </div>
+                  <Progress value={progress} className="h-2" />
+                  <p className="text-sm text-muted-foreground">
+                    {progress}% selesai
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Videos List */}
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>Daftar Video ({material.videos.length})</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {material.videos.length === 0 ? (
+                  <div className="text-center py-4">
+                    <p className="text-sm text-muted-foreground">
+                      Materi ini belum memiliki video pembelajaran
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {material.videos
+                      .sort((a, b) => a.order - b.order)
+                      .map((video, index) => (
+                        <div
+                          key={video.id}
+                          className={`flex items-center gap-3 p-3 border rounded-lg transition-colors cursor-pointer ${
+                            selectedVideo?.id === video.id
+                              ? "bg-primary/10 border-primary/30"
+                              : video.is_completed
+                              ? "bg-green-50 border-green-200"
+                              : "hover:bg-muted/50"
+                          }`}
+                          onClick={() => handleVideoClick(video)}
+                        >
+                          <div className="flex-shrink-0 w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-medium">
+                            {index + 1}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium truncate text-sm flex items-center gap-2">
+                              {video.title}
+                              {video.is_completed && (
+                                <CheckCircle className="h-3 w-3 text-green-600" />
+                              )}
+                            </h4>
+                          </div>
+                          <Play className="h-4 w-4 flex-shrink-0" />
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+          {/* Video Player */}
+          <div className="lg:col-span-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Play className="h-5 w-5" />
+                  {selectedVideo.title}
+                </CardTitle>
+                {selectedVideo.description && (
+                  <CardDescription>{selectedVideo.description}</CardDescription>
+                )}
+              </CardHeader>
+              <CardContent>
+                {/* Video Container */}
+                <div className="aspect-video rounded-md bg-black flex items-center justify-center relative overflow-hidden">
+                  {videoLoading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
+                      <div className="flex flex-col items-center gap-2 text-white">
+                        <Loader2 className="h-8 w-8 animate-spin" />
+                        <p className="text-sm">Memuat video...</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {videoError && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
+                      <div className="flex flex-col items-center gap-2 text-white text-center p-4">
+                        <AlertCircle className="h-8 w-8" />
+                        <p className="text-sm">{videoError}</p>
+                        <div className="flex gap-2 mt-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setVideoError(null);
+                              setVideoLoading(true);
+                              const videoElement = document.querySelector(
+                                "video"
+                              ) as HTMLVideoElement;
+                              if (videoElement) {
+                                videoElement.load();
+                              }
+                            }}
+                          >
+                            Coba Lagi
+                          </Button>
+                          {/* <Button variant="outline" size="sm" onClick={testVideoUrls}>
+                            Test URLs
+                          </Button> */}
                         </div>
                       </div>
                     </div>
-                  </Link>
-                ))}
+                  )}
 
-                <h3 className="font-medium">Quiz Terkait</h3>
-                {material.relatedQuizzes.map((quiz) => (
-                  <Link key={quiz.id} href={`/student/quizzes/${quiz.id}`} className="block">
-                    <div className="flex items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/50">
-                      <GraduationCap className="h-5 w-5 text-muted-foreground" />
-                      <div className="flex-1">
-                        <p className="font-medium">{quiz.title}</p>
-                        {quiz.score !== undefined && (
-                          <p className="text-sm text-muted-foreground">Nilai: {quiz.score}/100</p>
+                  <video
+                    key={selectedVideo.id} // Add this line
+                    className="w-full h-full"
+                    controls
+                    preload="metadata"
+                    onLoadStart={() => {
+                      console.log(
+                        "⏳ Video loading started for:",
+                        selectedVideo.title
+                      );
+                      setVideoLoading(true);
+                    }}
+                    onCanPlay={() => {
+                      console.log("✅ Video can play:", selectedVideo.title);
+                      setVideoLoading(false);
+                      toast({
+                        title: "Video Ready! ✅",
+                        description: `${selectedVideo.title} berhasil dimuat dan siap diputar`,
+                      });
+                    }}
+                    onError={(e) => {
+                      console.error(
+                        "🚫 Video error for:",
+                        selectedVideo.title,
+                        e
+                      );
+                      setVideoError("Video gagal dimuat");
+                      setVideoLoading(false);
+                      toast({
+                        title: "Video Error ❌",
+                        description: `${selectedVideo.title} gagal dimuat. Coba refresh halaman atau test URLs.`,
+                        variant: "destructive",
+                      });
+                    }}
+                    // Remove the onEnded event handler completely
+                    crossOrigin="anonymous"
+                    title={selectedVideo.title}
+                  >
+                    {/* Primary source - Direct URL with CORS headers */}
+                    <source
+                      src={getVideoDirectUrl(selectedVideo)}
+                      type={selectedVideo.video_type || "video/mp4"}
+                    />
+                    {/* Fallback source - Stream URL */}
+                    <source
+                      src={getVideoStreamUrl(selectedVideo)}
+                      type={selectedVideo.video_type || "video/mp4"}
+                    />
+                    Browser Anda tidak mendukung video player.
+                  </video>
+                </div>
+
+                {/* Video Controls */}
+                <div className="mt-4 flex justify-between items-center">
+                  <div>
+                    {!selectedVideo.is_completed && (
+                      <Button
+                        onClick={() => markVideoAsCompleted(selectedVideo.id)}
+                        disabled={completingVideo === selectedVideo.id}
+                      >
+                        {completingVideo === selectedVideo.id ? (
+                          <>
+                            <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
+                            Menandai...
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            Tandai Selesai
+                          </>
                         )}
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </TabsContent>
-          </Tabs>
+                      </Button>
+                    )}
+                    {selectedVideo.is_completed && (
+                      <Badge
+                        variant="secondary"
+                        className="bg-green-100 text-green-800 px-3 py-1"
+                      >
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Selesai
+                      </Badge>
+                    )}
+                  </div>
+                  {/* <Button variant="ghost" size="sm" onClick={testVideoUrls} className="text-xs">
+                    <TestTube className="h-3 w-3 mr-1" />
+                    Debug
+                  </Button> */}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
-      </div>
+      ) : (
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Tidak ada video yang tersedia untuk materi ini.
+          </AlertDescription>
+        </Alert>
+      )}
     </div>
-  )
+  );
 }

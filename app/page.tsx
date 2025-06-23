@@ -1,18 +1,12 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import {
-  ArrowRight,
-  BookOpen,
-  CheckCircle,
-  GraduationCap,
-  Users,
-} from "lucide-react";
+import { ArrowRight, BookOpen, CheckCircle, GraduationCap, Users } from 'lucide-react';
 
 export default function Home() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto flex h-16 items-center justify-between">
+        <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
           <div className="flex items-center gap-2">
             <GraduationCap className="h-6 w-6 text-primary" />
             <span className="text-xl font-bold">BERBISINDO</span>
@@ -37,7 +31,7 @@ export default function Home() {
               Kontak
             </Link>
           </nav>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <Link href="/login">
               <Button variant="outline">Masuk</Button>
             </Link>
@@ -49,11 +43,11 @@ export default function Home() {
       </header>
       <main className="flex-1">
         <section className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-b from-background to-muted">
-          <div className="container px-4 md:px-6">
-            <div className="grid gap-6 lg:grid-cols-2 lg:gap-12 items-center">
-              <div className="flex flex-col justify-center space-y-4">
+          <div className="container px-6 md:px-8 lg:px-6">
+            <div className="grid gap-8 lg:grid-cols-2 lg:gap-12 items-center">
+              <div className="flex flex-col justify-center space-y-6">
                 <div className="space-y-2">
-                  <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none">
+                  <h1 className="text-2xl font-bold tracking-tighter sm:text-4xl md:text-5xl xl:text-6xl/none">
                     Belajar Bahasa Isyarat Indonesia dengan Mudah
                   </h1>
                   <p className="max-w-[600px] text-muted-foreground md:text-xl">
@@ -64,7 +58,7 @@ export default function Home() {
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
                   <Link href="/register">
-                    <Button size="lg" className="gap-1 bg-[#38b6ff] hover:bg-[#2ca9f3] text-white">
+                    <Button size="lg" className="gap-1 bg-gradient-to-r from-blue-300 to-blue-500 text-white hover:from-blue-600 hover:to-blue-900 text-white">
                       Mulai Belajar <ArrowRight className="h-4 w-4" />
                     </Button>
                   </Link>
@@ -86,7 +80,7 @@ export default function Home() {
           </div>
         </section>
         <section id="fitur" className="w-full py-12 md:py-24 lg:py-32">
-          <div className="container px-4 md:px-6">
+          <div className="container px-6 md:px-8 lg:px-6">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
                 <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
@@ -98,8 +92,8 @@ export default function Home() {
                 </p>
               </div>
             </div>
-            <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 mt-8">
-              <div className="flex flex-col items-center space-y-2 rounded-lg border p-6 shadow-sm bg-[#fffedc]">
+            <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 mt-8 px-2 sm:px-0">
+              <div className="flex flex-col items-center space-y-2 rounded-lg border p-4 sm:p-6 shadow-sm bg-[#fffedc]">
                 <BookOpen className="h-12 w-12 text-primary" />
                 <h3 className="text-xl font-bold">Materi Terstruktur</h3>
                 <p className="text-center text-muted-foreground">
@@ -107,7 +101,7 @@ export default function Home() {
                   dipahami
                 </p>
               </div>
-              <div className="flex flex-col items-center space-y-2 rounded-lg border p-6 shadow-sm bg-[#daffec]">
+              <div className="flex flex-col items-center space-y-2 rounded-lg border p-4 sm:p-6 shadow-sm bg-[#daffec]">
                 <CheckCircle className="h-12 w-12 text-primary" />
                 <h3 className="text-xl font-bold">Latihan Interaktif</h3>
                 <p className="text-center text-muted-foreground">
@@ -115,7 +109,7 @@ export default function Home() {
                   isyarat
                 </p>
               </div>
-              <div className="flex flex-col items-center space-y-2 rounded-lg border p-6 shadow-sm bg-[#d3dbff]">
+              <div className="flex flex-col items-center space-y-2 rounded-lg border p-4 sm:p-6 shadow-sm bg-[#d3dbff]">
                 <Users className="h-12 w-12 text-primary" />
                 <h3 className="text-xl font-bold">Pemantauan Kemajuan</h3>
                 <p className="text-center text-muted-foreground">
@@ -127,7 +121,7 @@ export default function Home() {
         </section>
       </main>
       <footer className="w-full border-t bg-muted/50">
-        <div className="container mx-auto flex flex-col gap-4 py-10 md:flex-row md:gap-8">
+        <div className="container mx-auto flex flex-col gap-4 py-10 px-6 md:px-8 lg:px-6 md:flex-row md:gap-8">
           <div className="flex flex-col gap-2 md:gap-4 md:flex-1">
             <div className="flex items-center gap-2">
               <GraduationCap className="h-6 w-6 text-primary" />
@@ -137,7 +131,7 @@ export default function Home() {
               Platform pembelajaran bahasa isyarat Indonesia untuk semua
             </p>
           </div>
-          <div className="grid grid-cols-2 gap-10 md:flex-1 md:grid-cols-3">
+          <div className="grid grid-cols-2 gap-6 sm:gap-10 md:flex-1 md:grid-cols-3">
             <div className="space-y-2">
               <h4 className="text-sm font-medium">Platform</h4>
               <ul className="space-y-2 text-sm">
@@ -204,7 +198,7 @@ export default function Home() {
           </div>
         </div>
         <div className="border-t py-6">
-          <div className="container mx-auto flex flex-col items-center justify-between gap-4 md:flex-row">
+          <div className="container mx-auto flex flex-col items-center justify-between gap-4 px-6 md:px-8 lg:px-6 md:flex-row">
             <p className="text-center text-sm text-muted-foreground md:text-left">
               © 2025 BERBISINDO. Hak Cipta Dilindungi.
             </p>

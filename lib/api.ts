@@ -1,4 +1,5 @@
 export const API_BASE = 'http://localhost:8000'; // Ganti dengan URL Laravel Anda
+// export const API_BASE = 'https://50ab-125-165-214-242.ngrok-free.app '; // Ganti dengan URL Laravel Anda
 
 export async function apiFetch(path: string, options: RequestInit = {}) {
   const res = await fetch(`${API_BASE}${path}`, {

@@ -77,7 +77,7 @@ export default function CreateVideo({
 
     setLoading(true);
     setError(null);
-    setUploadProgress(0);
+    setUploadProgress(0); // meskipun tidak digunakan fetch, bisa disimpan kalau nanti mau pakai xhr
 
     try {
       const token = localStorage.getItem("token");
@@ -100,53 +100,41 @@ export default function CreateVideo({
         submitData.append("order", formData.order);
       }
 
-      // Create XMLHttpRequest for upload progress
-      const xhr = new XMLHttpRequest();
-
-      // Track upload progress
-      xhr.upload.addEventListener("progress", (e) => {
-        if (e.lengthComputable) {
-          const percentComplete = (e.loaded / e.total) * 100;
-          setUploadProgress(percentComplete);
+      const res = await fetch(
+        buildUrl(`/api/materials/${resolvedParams.id}/videos`),
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+          body: submitData,
         }
-      });
+      );
 
-      // Handle response
-      xhr.addEventListener("load", () => {
-        if (xhr.status === 201) {
-          const data = JSON.parse(xhr.responseText);
-          toast({
-            title: "Video berhasil ditambahkan",
-            description: "Video telah berhasil diupload ke materi.",
-          });
-          router.push(`/teacher/materials/${resolvedParams.id}`);
-        } else if (xhr.status === 401) {
-          toast({
-            title: "Session Expired",
-            description: "Sesi Anda telah berakhir. Silakan login kembali.",
-            variant: "destructive",
-          });
-          localStorage.removeItem("token");
-          router.push("/login");
-        } else {
-          const errorData = JSON.parse(xhr.responseText);
-          setError(errorData.message || "Gagal mengupload video");
-        }
-        setLoading(false);
-      });
+      const data = await res.json();
 
-      xhr.addEventListener("error", () => {
-        setError("Terjadi kesalahan saat mengupload video");
-        setLoading(false);
-      });
-
-      // Send request
-      xhr.open("POST", buildUrl(`/api/materials/${resolvedParams.id}/videos`));
-      xhr.setRequestHeader("Authorization", `Bearer ${token}`);
-      xhr.setRequestHeader("Accept", "application/json");
-      xhr.send(submitData);
+      if (res.status === 201) {
+        toast({
+          title: "Video berhasil ditambahkan",
+          description: "Video telah berhasil diupload ke materi.",
+        });
+        router.push(`/teacher/materials/${resolvedParams.id}`);
+      } else if (res.status === 401) {
+        toast({
+          title: "Session Expired",
+          description: "Sesi Anda telah berakhir. Silakan login kembali.",
+          variant: "destructive",
+        });
+        localStorage.removeItem("token");
+        router.push("/login");
+      } else {
+        setError(data.error || data.message || "Gagal mengupload video");
+      }
     } catch (err) {
+      console.error("UPLOAD ERROR", err);
       setError("Terjadi kesalahan saat mengupload video");
+    } finally {
       setLoading(false);
     }
   };

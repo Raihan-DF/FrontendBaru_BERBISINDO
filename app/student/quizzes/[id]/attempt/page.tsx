@@ -25,6 +25,9 @@ import {
   Pause,
   Loader2,
   RepeatIcon as Replay,
+  Trophy,
+  Target,
+  Award,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
@@ -79,12 +82,15 @@ interface QuizAttemptResult {
   passed: boolean
   correct_answers: number
   total_questions: number
+  time_taken?: number
 }
 
 export default function QuizAttemptPage({ params }: { params: Promise<{ id: string }> }) {
   const { toast } = useToast()
   const router = useRouter()
   const resolvedParams = use(params)
+  const { buildUrl } = useApi()
+
   const [quiz, setQuiz] = useState<Quiz | null>(null)
   const [loading, setLoading] = useState(true)
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
@@ -94,6 +100,7 @@ export default function QuizAttemptPage({ params }: { params: Promise<{ id: stri
   const [showResults, setShowResults] = useState(false)
   const [results, setResults] = useState<QuizAttemptResult | null>(null)
   const [startTime, setStartTime] = useState<Date | null>(null)
+  const [elapsedTime, setElapsedTime] = useState(0)
   const [flaggedQuestions, setFlaggedQuestions] = useState<Set<number>>(new Set())
   const [showQuestionNavigation, setShowQuestionNavigation] = useState(false)
 
@@ -107,13 +114,12 @@ export default function QuizAttemptPage({ params }: { params: Promise<{ id: stri
   const [isVideoPlaying, setIsVideoPlaying] = useState(false)
   const [hasWatchedVideo, setHasWatchedVideo] = useState(false)
   const [showVideo, setShowVideo] = useState(false)
-  const { get, post, put, delete: del, buildUrl } = useApi();
 
   useEffect(() => {
     fetchQuiz()
   }, [resolvedParams.id])
 
-  // Improved Timer effect with modal handling
+  // Timer effect for countdown
   useEffect(() => {
     if (timeLeft > 0 && !showResults && !showTimeUpModal) {
       const timer = setTimeout(() => {
@@ -121,10 +127,19 @@ export default function QuizAttemptPage({ params }: { params: Promise<{ id: stri
       }, 1000)
       return () => clearTimeout(timer)
     } else if (timeLeft === 0 && quiz && !showResults && !showTimeUpModal) {
-      // Time's up - show modal first
       setShowTimeUpModal(true)
     }
   }, [timeLeft, showResults, quiz, showTimeUpModal])
+
+  // Timer effect for elapsed time tracking
+  useEffect(() => {
+    if (startTime && !showResults) {
+      const timer = setInterval(() => {
+        setElapsedTime(Math.floor((new Date().getTime() - startTime.getTime()) / 1000))
+      }, 1000)
+      return () => clearInterval(timer)
+    }
+  }, [startTime, showResults])
 
   // Reset video states when question changes
   useEffect(() => {
@@ -140,7 +155,6 @@ export default function QuizAttemptPage({ params }: { params: Promise<{ id: stri
     }
   }, [currentQuestionIndex, quiz])
 
-  // Menggunakan endpoint yang sudah ada untuk mendapatkan quiz dengan questions
   const fetchQuiz = async () => {
     try {
       const token = localStorage.getItem("token")
@@ -151,11 +165,10 @@ export default function QuizAttemptPage({ params }: { params: Promise<{ id: stri
           description: "Token tidak ditemukan. Silakan login kembali.",
           variant: "destructive",
         })
-        router.push("/login")
+        router.push("/auth/login")
         return
       }
 
-      // Gunakan endpoint yang sudah ada untuk mendapatkan quiz detail dengan questions
       const response = await fetch(buildUrl(`/api/quizzes/${resolvedParams.id}`), {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -170,7 +183,7 @@ export default function QuizAttemptPage({ params }: { params: Promise<{ id: stri
           variant: "destructive",
         })
         localStorage.removeItem("token")
-        router.push("/login")
+        router.push("/auth/login")
         return
       }
 
@@ -224,8 +237,6 @@ export default function QuizAttemptPage({ params }: { params: Promise<{ id: stri
       router.push(`/student/quizzes/${resolvedParams.id}`)
     } finally {
       setLoading(false)
-      // Remove this line that's causing errors
-      // await checkQuizState()
     }
   }
 
@@ -286,7 +297,7 @@ export default function QuizAttemptPage({ params }: { params: Promise<{ id: stri
     }
   }
 
-  // Menggunakan route web yang sudah ada untuk streaming video
+  // Use working video streaming approach from exercise practice page
   const getVideoStreamUrl = (question: QuizQuestion) => {
     if (!question.material_video_id || !question.material_video) return ""
     return buildUrl(`/quiz-video/${quiz?.id}/${question.id}`)
@@ -326,7 +337,6 @@ export default function QuizAttemptPage({ params }: { params: Promise<{ id: stri
   }
 
   const handleAnswerChange = (questionId: number, optionId: number) => {
-    // Update local state only - no auto submit
     setAnswers((prev) => ({
       ...prev,
       [questionId]: optionId,
@@ -368,80 +378,6 @@ export default function QuizAttemptPage({ params }: { params: Promise<{ id: stri
     await handleSubmitQuiz(true)
   }
 
-  // Check for unfinished quiz attempts
-  const checkQuizState = async () => {
-    try {
-      const token = localStorage.getItem("token")
-      if (!token) return
-
-      const response = await fetch(buildUrl(`/api/quizzes/${resolvedParams.id}/status`), {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-        },
-      })
-
-      if (response.ok) {
-        const statusData = await response.json()
-
-        if (statusData.has_unfinished_attempt) {
-          setQuizStateMessage(
-            `Anda memiliki percobaan quiz yang belum selesai. Waktu tersisa: ${statusData.remaining_time} menit. Apakah Anda ingin melanjutkan atau memulai ulang?`,
-          )
-          setShowQuizStateModal(true)
-        } else if (statusData.max_attempts_reached) {
-          setQuizStateMessage("Anda telah mencapai batas maksimal percobaan untuk quiz ini.")
-          setShowQuizStateModal(true)
-        }
-      } else {
-        // Don't show error for status check, just log it
-        console.log("Status check failed, continuing with normal flow")
-      }
-    } catch (error) {
-      // Don't show error for status check, just log it
-      console.log("Error checking quiz state:", error)
-    }
-  }
-
-  // Handle quiz state actions
-  const handleQuizStateAction = async (action: "continue" | "restart" | "close") => {
-    setShowQuizStateModal(false)
-
-    if (action === "continue") {
-      // Continue with existing attempt
-      fetchQuiz()
-    } else if (action === "restart") {
-      // Start new attempt
-      try {
-        const token = localStorage.getItem("token")
-        const response = await fetch(buildUrl(`/api/quizzes/${resolvedParams.id}/reset`), {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-          },
-        })
-
-        if (response.ok) {
-          fetchQuiz()
-          toast({
-            title: "Quiz Direset",
-            description: "Memulai percobaan baru.",
-          })
-        }
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Gagal mereset quiz.",
-          variant: "destructive",
-        })
-      }
-    } else {
-      // Close and go back
-      router.push(`/student/quizzes/${resolvedParams.id}`)
-    }
-  }
-
   // Improved submit function with better error handling
   const handleSubmitQuiz = async (isAutoSubmit = false) => {
     if (!quiz) return
@@ -471,7 +407,7 @@ export default function QuizAttemptPage({ params }: { params: Promise<{ id: stri
           description: "Token tidak ditemukan. Silakan login kembali.",
           variant: "destructive",
         })
-        router.push("/login")
+        router.push("/auth/login")
         return
       }
 
@@ -490,7 +426,7 @@ export default function QuizAttemptPage({ params }: { params: Promise<{ id: stri
           Accept: "application/json",
         },
         body: JSON.stringify({
-          answers: answers, // Remove is_auto_submit field
+          answers: answers,
         }),
       })
 
@@ -501,13 +437,16 @@ export default function QuizAttemptPage({ params }: { params: Promise<{ id: stri
           variant: "destructive",
         })
         localStorage.removeItem("token")
-        router.push("/login")
+        router.push("/auth/login")
         return
       }
 
       if (response.ok) {
         const resultData = await response.json()
         console.log("Quiz submission result:", resultData)
+
+        // Add elapsed time to results
+        resultData.time_taken = elapsedTime
 
         setResults(resultData)
         setShowResults(true)
@@ -641,89 +580,126 @@ export default function QuizAttemptPage({ params }: { params: Promise<{ id: stri
     )
   }
 
-  // Results Screen
+  // Results Screen - Updated to match exercise practice page styling
   if (showResults && results) {
+    const isPassingGrade = results.percentage >= results.passing_score
+
     return (
-      <div className="min-h-screen py-6 bg-gradient-to-br from-blue-50 to-purple-50">
-        <div className="container mx-auto max-w-4xl p-4">
-          <div className="flex items-center gap-4 mb-8">
-            <Link href="/student/quizzes">
-              <Button variant="outline" size="icon">
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-            </Link>
-            <h1 className="text-3xl font-bold tracking-tight text-gray-900">Hasil Quiz</h1>
-          </div>
-
-          <Card className="shadow-md backdrop-blur-sm bg-white/80 dark:bg-gray-900/80 border dark:border-gray-700">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg font-semibold">
-                {results.passed ? (
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                ) : (
-                  <AlertTriangle className="h-5 w-5 text-red-500" />
-                )}
-                Quiz Selesai
-              </CardTitle>
-              <CardDescription className="text-sm text-gray-500 dark:text-gray-400">
-                {quiz.title} • {results.message}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{results.score}</div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">Skor Total</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                    {results.percentage.toFixed(1)}%
-                  </div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">Persentase</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                    {results.correct_answers}/{results.total_questions}
-                  </div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">Jawaban Benar</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{results.max_score}</div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">Skor Maksimal</div>
-                </div>
-              </div>
-
-              {/* Passing Status */}
-              <div className="mt-6 p-4 rounded-md border dark:border-gray-700">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-gray-900 dark:text-gray-100">Status Kelulusan:</span>
-                  <Badge variant={results.passed ? "default" : "destructive"}>
-                    {results.passed ? "LULUS" : "TIDAK LULUS"}
-                  </Badge>
-                </div>
-                <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  Nilai minimum untuk lulus: {results.passing_score}%
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <div className="flex justify-center gap-4 mt-8">
-            <Link href="/student/quizzes">
-              <Button variant="outline">Kembali ke Daftar Quiz</Button>
-            </Link>
-            <Link href={`/student/quizzes/${quiz.id}`}>
-              <Button className="bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600">
-                Lihat Detail Quiz
-              </Button>
-            </Link>
-            {results.attempt_id && (
-              <Link href={`/student/quizzes/${quiz.id}/attempts/${results.attempt_id}/results`}>
-                <Button variant="outline">Lihat Detail Jawaban</Button>
-              </Link>
-            )}
-          </div>
+      <div className="flex flex-col gap-6 max-w-4xl mx-auto p-6">
+        <div className="flex items-center gap-4">
+          <Link href="/student/quizzes">
+            <Button variant="outline" size="icon">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </Link>
+          <h1 className="text-3xl font-bold tracking-tight">Quiz Selesai</h1>
         </div>
+
+        <Card className="border-2 border-dashed border-primary/20">
+          <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              {isPassingGrade ? (
+                <div className="p-4 bg-green-100 rounded-full">
+                  <Trophy className="h-12 w-12 text-green-600" />
+                </div>
+              ) : (
+                <div className="p-4 bg-orange-100 rounded-full">
+                  <Target className="h-12 w-12 text-orange-600" />
+                </div>
+              )}
+            </div>
+            <CardTitle className="text-2xl">{results.message}</CardTitle>
+            <CardDescription className="text-lg">{quiz.title} • Quiz Selesai</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {/* Score Overview */}
+            <div className="grid grid-cols-2 gap-6 md:grid-cols-4 mb-8">
+              <div className="text-center p-4 bg-blue-50 rounded-lg">
+                <div className="text-3xl font-bold text-blue-600">{results.score}</div>
+                <div className="text-sm text-blue-600 font-medium">Skor Total</div>
+                <div className="text-xs text-muted-foreground">dari {results.max_score}</div>
+              </div>
+              <div className="text-center p-4 bg-green-50 rounded-lg">
+                <div className="text-3xl font-bold text-green-600">{results.percentage.toFixed(1)}%</div>
+                <div className="text-sm text-green-600 font-medium">Persentase</div>
+                <div className="text-xs text-muted-foreground">{isPassingGrade ? "Lulus" : "Belum Lulus"}</div>
+              </div>
+              <div className="text-center p-4 bg-purple-50 rounded-lg">
+                <div className="text-3xl font-bold text-purple-600">
+                  {results.correct_answers}/{results.total_questions}
+                </div>
+                <div className="text-sm text-purple-600 font-medium">Jawaban Benar</div>
+                <div className="text-xs text-muted-foreground">
+                  {Math.round((results.correct_answers / results.total_questions) * 100)}% akurasi
+                </div>
+              </div>
+              <div className="text-center p-4 bg-orange-50 rounded-lg">
+                <div className="text-3xl font-bold text-orange-600">
+                  {formatTime(results.time_taken || elapsedTime)}
+                </div>
+                <div className="text-sm text-orange-600 font-medium">Waktu</div>
+                <div className="text-xs text-muted-foreground">Total waktu</div>
+              </div>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="mb-6">
+              <div className="flex justify-between text-sm mb-2">
+                <span>Progress Penyelesaian</span>
+                <span>
+                  {results.correct_answers}/{results.total_questions} benar
+                </span>
+              </div>
+              <Progress value={(results.correct_answers / results.total_questions) * 100} className="h-3" />
+            </div>
+
+            {/* Passing Status */}
+            <div className="mb-6 p-4 rounded-md border">
+              <div className="flex items-center justify-between">
+                <span className="font-medium">Status Kelulusan:</span>
+                <Badge variant={isPassingGrade ? "default" : "destructive"}>
+                  {isPassingGrade ? "LULUS" : "TIDAK LULUS"}
+                </Badge>
+              </div>
+              <div className="text-sm text-muted-foreground mt-1">
+                Nilai minimum untuk lulus: {results.passing_score}%
+              </div>
+            </div>
+
+            {/* Achievement Badge */}
+            {isPassingGrade && (
+              <div className="text-center mb-6 p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
+                <Award className="h-8 w-8 text-green-600 mx-auto mb-2" />
+                <p className="text-green-700 font-medium">Selamat! Anda telah lulus quiz ini</p>
+                <p className="text-sm text-green-600">Skor Anda melebihi batas kelulusan {results.passing_score}%</p>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex flex-col md:flex-row justify-center gap-4">
+              <Link href="/student/quizzes">
+                <Button variant="outline" className="w-full md:w-auto">
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Kembali ke Daftar Quiz
+                </Button>
+              </Link>
+              <Link href={`/student/quizzes/${quiz.id}`}>
+                <Button variant="outline" className="w-full md:w-auto">
+                  <Eye className="mr-2 h-4 w-4" />
+                  Lihat Detail Quiz
+                </Button>
+              </Link>
+              {results.attempt_id && (
+                <Link href={`/student/quizzes/${quiz.id}/attempts/${results.attempt_id}/results`}>
+                  <Button className="w-full md:w-auto">
+                    <Trophy className="mr-2 h-4 w-4" />
+                    Lihat Detail Jawaban
+                  </Button>
+                </Link>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     )
   }
@@ -782,8 +758,8 @@ export default function QuizAttemptPage({ params }: { params: Promise<{ id: stri
           <Card className="shadow-md backdrop-blur-sm bg-white/80 dark:bg-gray-900/80 border dark:border-gray-700">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Ditandai</span>
-                <span className="text-lg font-bold text-yellow-600">{getFlaggedCount()}</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Waktu Berlalu</span>
+                <span className="text-lg font-bold text-blue-600">{formatTime(elapsedTime)}</span>
               </div>
             </CardContent>
           </Card>
@@ -950,13 +926,6 @@ export default function QuizAttemptPage({ params }: { params: Promise<{ id: stri
                   <div className="text-xs text-muted-foreground">💡 Tonton video untuk pemahaman lebih baik</div>
                 )}
               </div>
-
-              {/* {currentQuestion.material_video?.description && (
-                <div className="mt-4 p-3 bg-muted rounded-md">
-                  <h4 className="font-medium mb-1 text-sm text-gray-900 dark:text-gray-100">Deskripsi Video</h4>
-                  <p className="text-xs text-muted-foreground">{currentQuestion.material_video.description}</p>
-                </div>
-              )} */}
             </CardContent>
           </Card>
         )}
@@ -1047,7 +1016,7 @@ export default function QuizAttemptPage({ params }: { params: Promise<{ id: stri
         </Card>
 
         {/* Submit Warning */}
-        {timeLeft <= 30 && (
+        {timeLeft <= 300 && (
           <Card className="border-red-200 bg-red-50 dark:bg-red-900/10 shadow-md backdrop-blur-sm bg-white/80 dark:bg-gray-900/80 border dark:border-gray-700">
             <CardContent className="flex items-center gap-3 p-4">
               <AlertTriangle className="h-6 w-6 text-red-500" />
@@ -1148,31 +1117,6 @@ export default function QuizAttemptPage({ params }: { params: Promise<{ id: stri
                   Kembali Mengerjakan
                 </Button>
               </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* Quiz State Modal */}
-        <Dialog open={showQuizStateModal} onOpenChange={setShowQuizStateModal}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-blue-600" />
-                Status Quiz
-              </DialogTitle>
-              <DialogDescription>{quizStateMessage}</DialogDescription>
-            </DialogHeader>
-
-            <div className="flex flex-col gap-2 py-4">
-              <Button onClick={() => handleQuizStateAction("continue")} className="w-full">
-                Lanjutkan Quiz
-              </Button>
-              <Button variant="outline" onClick={() => handleQuizStateAction("restart")} className="w-full">
-                Mulai Ulang
-              </Button>
-              <Button variant="ghost" onClick={() => handleQuizStateAction("close")} className="w-full">
-                Kembali
-              </Button>
             </div>
           </DialogContent>
         </Dialog>

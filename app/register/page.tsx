@@ -388,7 +388,7 @@ export default function RegisterPage() {
             {verificationStep === "sent" && (
               <>
                 <Button onClick={handleCloseModal} className="w-full">
-                  Lanjut ke Verifikasi
+                  Lanjut ke Login?
                 </Button>
                 <Button variant="outline" onClick={handleResendEmail} className="w-full">
                   Kirim Ulang Email

@@ -333,7 +333,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const router = useRouter()
 
   // const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://103.161.185.92"
+  // const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://103.161.185.92"
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.berbisindo.site"
 
   // Initialize auth state from localStorage
   useEffect(() => {

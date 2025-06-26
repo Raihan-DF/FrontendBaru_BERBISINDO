@@ -262,7 +262,7 @@ export default function ExercisePracticePage() {
           setIsCompleted(false)
           setCurrentQuestionIndex(0)
           toast({
-            title: "Exercise Sudah Pernah Diselesaikan",
+            title: "Latihan Sudah Pernah Diselesaikan",
             description: "Anda dapat mengulang exercise ini.",
             variant: "default",
           })

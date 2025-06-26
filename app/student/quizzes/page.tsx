@@ -3,11 +3,23 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, Clock, Users, Trophy, BookOpen, CheckCircle, AlertCircle, Target, Brain } from "lucide-react"
+import {
+  Search,
+  Clock,
+  Trophy,
+  Users,
+  Calendar,
+  BookOpen,
+  CheckCircle,
+  AlertCircle,
+  Target,
+  Zap,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
 import { useApi } from "@/hooks/use-api"
@@ -41,6 +53,8 @@ interface Quiz {
   last_attempt_at?: string
 }
 
+const ITEMS_PER_PAGE = 4
+
 export default function QuizzesPage() {
   const { toast } = useToast()
   const router = useRouter()
@@ -50,11 +64,16 @@ export default function QuizzesPage() {
   const [selectedMaterial, setSelectedMaterial] = useState<string>("all")
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>("all")
   const [selectedStatus, setSelectedStatus] = useState<string>("all")
-  const { get, post, put, delete: del, buildUrl } = useApi();
+  const [currentPage, setCurrentPage] = useState(1)
+  const { get, post, put, delete: del, buildUrl } = useApi()
 
   useEffect(() => {
     fetchQuizzes()
   }, [])
+
+  useEffect(() => {
+    setCurrentPage(1) // Reset to first page when filters change
+  }, [searchTerm, selectedMaterial, selectedDifficulty, selectedStatus])
 
   const fetchQuizzes = async () => {
     try {
@@ -127,65 +146,6 @@ export default function QuizzesPage() {
     }
   }
 
-  // const getDifficultyLabel = (level: number) => {
-  //   const labels = ["", "Sangat Mudah", "Mudah", "Sedang", "Sulit", "Sangat Sulit"]
-  //   return labels[level] || "Tidak Diketahui"
-  // }
-
-  // const getDifficultyColor = (level: number) => {
-  //   const colors = [
-  //     "",
-  //     "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 border-green-200",
-  //     "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400 border-blue-200",
-  //     "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400 border-yellow-200",
-  //     "bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400 border-orange-200",
-  //     "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400 border-red-200",
-  //   ]
-  //   return colors[level] || "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400 border-gray-200"
-  // }
-  const difficultyLabels: Record<string, string> = {
-    all: "Semua Tingkat",
-    "1": "Sangat Mudah",
-    "2": "Mudah",
-    "3": "Sedang",
-    "4": "Sulit",
-    "5": "Sangat Sulit",
-  };
-  const getStatusBadge = (quiz: Quiz) => {
-    if (quiz.is_completed) {
-      return (
-        <Badge className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 border-green-200 border">
-          <CheckCircle className="h-3 w-3 mr-1" />
-          Selesai
-        </Badge>
-      )
-    }
-
-    if (quiz.attempt_count && quiz.attempt_count > 0) {
-      return (
-        <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-400 border-amber-200 border">
-          <AlertCircle className="h-3 w-3 mr-1" />
-          Dalam Progress
-        </Badge>
-      )
-    }
-
-    return (
-      <Badge variant="outline" className="border-blue-200">
-        <BookOpen className="h-3 w-3 mr-1" />
-        Belum Dimulai
-      </Badge>
-    )
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("id-ID", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    })
-  }
-
   const formatTime = (minutes: number) => {
     if (minutes < 60) {
       return `${minutes} menit`
@@ -239,158 +199,169 @@ export default function QuizzesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-slate-900 dark:to-slate-800">
-      <div className="container mx-auto py-8 space-y-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
+      <div className="container mx-auto py-4 px-3 sm:py-6 sm:px-4 space-y-4 sm:space-y-6">
         {/* Header Section */}
-        <div className="text-center space-y-4">
-          {/* <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-lg mb-4">
-            <Brain className="h-8 w-8 text-white" />
-          </div> */}
-          <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-            Quiz Interaktif
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Uji pemahaman bahasa isyarat Anda dengan berbagai quiz yang menantang dan interaktif
+        <div className="text-center space-y-2 sm:space-y-3">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Quiz Interaktif</h1>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 px-2">
+            Uji pemahaman bahasa isyarat Anda dengan berbagai quiz yang menantang
           </p>
         </div>
 
-        {/* Statistics Cards */}
-        <div className="grid gap-6 md:grid-cols-3 max-w-4xl mx-auto">
-          <Card className="shadow-lg border-0 bg-gradient-to-br from-indigo-500 to-blue-600 text-white">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-indigo-100 text-sm font-medium">Total Quiz</p>
-                  <p className="text-3xl font-bold">{filteredQuizzes.length}</p>
-                </div>
-                <div className="bg-white/20 p-3 rounded-full">
-                  <BookOpen className="h-6 w-6" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-lg border-0 bg-gradient-to-br from-green-500 to-emerald-600 text-white">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-green-100 text-sm font-medium">Selesai</p>
-                  <p className="text-3xl font-bold">{completedQuizzes.length}</p>
-                </div>
-                <div className="bg-white/20 p-3 rounded-full">
-                  <CheckCircle className="h-6 w-6" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-lg border-0 bg-gradient-to-br from-amber-500 to-orange-600 text-white">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-amber-100 text-sm font-medium">Dalam Progress</p>
-                  <p className="text-3xl font-bold">{inProgressQuizzes.length}</p>
-                </div>
-                <div className="bg-white/20 p-3 rounded-full">
-                  <AlertCircle className="h-6 w-6" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Statistics */}
+        <div className="rounded-xl bg-gradient-to-br from-[#f472b6] to-[#8B5CF6] dark:from-[#be185d] dark:to-[#7c3aed] p-4 sm:p-6 shadow-md">
+          <div className="grid grid-cols-3 gap-4 text-center">
+            <div className="flex flex-col items-center justify-center gap-1">
+              <div className="text-2xl sm:text-3xl font-bold text-white">{filteredQuizzes.length}</div>
+              <p className="text-xs sm:text-sm text-white/90 font-medium">Total</p>
+            </div>
+            <div className="flex flex-col items-center justify-center gap-1">
+              <div className="text-2xl sm:text-3xl font-bold text-white">{completedQuizzes.length}</div>
+              <p className="text-xs sm:text-sm text-white/90 font-medium">Selesai</p>
+            </div>
+            <div className="flex flex-col items-center justify-center gap-1">
+              <div className="text-2xl sm:text-3xl font-bold text-white">{inProgressQuizzes.length}</div>
+              <p className="text-xs sm:text-sm text-white/90 font-medium">Progress</p>
+            </div>
+          </div>
+          <div className="h-1 w-16 bg-white/30 rounded-full mt-4 mx-auto"></div>
         </div>
 
         {/* Search and Filters */}
-        <Card className="max-w-6xl mx-auto shadow-lg border-0 bg-white/80 backdrop-blur-sm">
-          <CardContent className="p-6">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Cari quiz berdasarkan judul, deskripsi, atau materi..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 border-0 bg-gray-50 focus:bg-white transition-colors"
-                  />
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <Select value={selectedMaterial} onValueChange={setSelectedMaterial}>
-                  <SelectTrigger className="w-[150px] border-0 bg-gray-50">
-                    <SelectValue placeholder="Materi" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Semua Materi</SelectItem>
-                    {materials.map((material) => (
-                      <SelectItem key={material} value={material}>
-                        {material}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+        <div className="bg-white dark:bg-slate-800 rounded-lg p-3 sm:p-4 shadow-sm space-y-3 sm:space-y-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Cari quiz..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 border-gray-200 dark:border-gray-700 text-sm sm:text-base"
+            />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
+            <Select value={selectedMaterial} onValueChange={setSelectedMaterial}>
+              <SelectTrigger className="border-gray-200 dark:border-gray-700 text-sm">
+                <SelectValue placeholder="Materi" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Materi</SelectItem>
+                {materials.map((material) => (
+                  <SelectItem key={material} value={material}>
+                    {material}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-                <Select 
-  value={selectedDifficulty} 
-  onValueChange={setSelectedDifficulty}
-  defaultValue="all"
->
-  <SelectTrigger className="w-[150px] border-0 bg-gray-50">
-    <SelectValue placeholder="Tingkat" />
-  </SelectTrigger>
-  <SelectContent>
-    <SelectItem value="all">Semua Tingkat</SelectItem>
-    <SelectItem value="1">Sangat Mudah</SelectItem>
-    <SelectItem value="2">Mudah</SelectItem>
-    <SelectItem value="3">Sedang</SelectItem>
-    <SelectItem value="4">Sulit</SelectItem>
-    <SelectItem value="5">Sangat Sulit</SelectItem>
-  </SelectContent>
-</Select>
+            <Select value={selectedDifficulty} onValueChange={setSelectedDifficulty} defaultValue="all">
+              <SelectTrigger className="border-gray-200 dark:border-gray-700 text-sm">
+                <SelectValue placeholder="Tingkat" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Tingkat</SelectItem>
+                <SelectItem value="1">Sangat Mudah</SelectItem>
+                <SelectItem value="2">Mudah</SelectItem>
+                <SelectItem value="3">Sedang</SelectItem>
+                <SelectItem value="4">Sulit</SelectItem>
+                <SelectItem value="5">Sangat Sulit</SelectItem>
+              </SelectContent>
+            </Select>
 
-
-                <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                  <SelectTrigger className="w-[130px] border-0 bg-gray-50">
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Semua Status</SelectItem>
-                    <SelectItem value="not-started">Belum Dimulai</SelectItem>
-                    <SelectItem value="in-progress">Dalam Progress</SelectItem>
-                    <SelectItem value="completed">Selesai</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+              <SelectTrigger className="border-gray-200 dark:border-gray-700 text-sm">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Status</SelectItem>
+                <SelectItem value="not-started">Belum Dimulai</SelectItem>
+                <SelectItem value="in-progress">Progress</SelectItem>
+                <SelectItem value="completed">Selesai</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
 
         {/* Quiz Grid */}
-        <div className="max-w-6xl mx-auto">
-          {filteredQuizzes.length === 0 ? (
-            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
-              <CardContent className="flex flex-col items-center justify-center py-16">
-                <BookOpen className="h-16 w-16 text-muted-foreground mb-6" />
-                <h3 className="text-xl font-medium text-muted-foreground mb-3">
-                  {searchTerm || selectedMaterial !== "all" || selectedDifficulty !== "all" || selectedStatus !== "all"
-                    ? "Tidak ada quiz yang sesuai dengan filter"
-                    : "Belum ada quiz tersedia"}
-                </h3>
-                <p className="text-muted-foreground text-center max-w-md">
-                  {searchTerm || selectedMaterial !== "all" || selectedDifficulty !== "all" || selectedStatus !== "all"
-                    ? "Coba ubah kriteria pencarian atau filter Anda untuk menemukan quiz yang sesuai"
-                    : "Quiz akan muncul di sini ketika sudah tersedia dari instruktur"}
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {filteredQuizzes.map((quiz) => (
-                <QuizCard key={quiz.id} quiz={quiz} />
+        <QuizGrid quizzes={filteredQuizzes} currentPage={currentPage} setCurrentPage={setCurrentPage} />
+      </div>
+    </div>
+  )
+}
+
+function QuizGrid({
+  quizzes,
+  currentPage,
+  setCurrentPage,
+}: {
+  quizzes: Quiz[]
+  currentPage: number
+  setCurrentPage: (page: number) => void
+}) {
+  const totalPages = Math.ceil(quizzes.length / ITEMS_PER_PAGE)
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+  const endIndex = startIndex + ITEMS_PER_PAGE
+  const currentQuizzes = quizzes.slice(startIndex, endIndex)
+
+  if (quizzes.length === 0) {
+    return (
+      <div className="text-center py-12 bg-white dark:bg-slate-800 rounded-lg">
+        <Trophy className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Tidak ada quiz yang sesuai</h3>
+        <p className="text-gray-600 dark:text-gray-400 text-sm px-4">Coba ubah kriteria pencarian</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {currentQuizzes.map((quiz) => (
+          <QuizCard key={quiz.id} quiz={quiz} />
+        ))}
+      </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between bg-white dark:bg-slate-800 rounded-lg p-3 sm:p-4 shadow-sm">
+          <div className="text-sm text-gray-600 dark:text-gray-400">
+            Halaman {currentPage} dari {totalPages} ({quizzes.length} total)
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
+              className="h-8 w-8 p-0"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <Button
+                  key={page}
+                  variant={currentPage === page ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setCurrentPage(page)}
+                  className="h-8 w-8 p-0 text-xs"
+                >
+                  {page}
+                </Button>
               ))}
             </div>
-          )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+              disabled={currentPage === totalPages}
+              className="h-8 w-8 p-0"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }
@@ -404,19 +375,19 @@ function QuizCard({ quiz }: { quiz: Quiz }) {
   const getDifficultyColor = (level: number) => {
     const colors = [
       "",
-      "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 border-green-200",
-      "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400 border-blue-200",
-      "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400 border-yellow-200",
-      "bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400 border-orange-200",
-      "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400 border-red-200",
+      "bg-green-100 text-green-800",
+      "bg-blue-100 text-blue-800",
+      "bg-yellow-100 text-yellow-800",
+      "bg-orange-100 text-orange-800",
+      "bg-red-100 text-red-800",
     ]
-    return colors[level] || "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400 border-gray-200"
+    return colors[level] || "bg-gray-100 text-gray-800"
   }
 
   const getStatusBadge = (quiz: Quiz) => {
     if (quiz.is_completed) {
       return (
-        <Badge className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 border-green-200 border">
+        <Badge className="bg-green-100 text-green-800 text-xs">
           <CheckCircle className="h-3 w-3 mr-1" />
           Selesai
         </Badge>
@@ -425,27 +396,19 @@ function QuizCard({ quiz }: { quiz: Quiz }) {
 
     if (quiz.attempt_count && quiz.attempt_count > 0) {
       return (
-        <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-400 border-amber-200 border">
+        <Badge className="bg-amber-100 text-amber-800 text-xs">
           <AlertCircle className="h-3 w-3 mr-1" />
-          Dalam Progress
+          Progress
         </Badge>
       )
     }
 
     return (
-      <Badge variant="outline" className="border-blue-200">
+      <Badge className="bg-blue-100 text-blue-800 text-xs">
         <BookOpen className="h-3 w-3 mr-1" />
-        Belum Dimulai
+        Belum Mulai
       </Badge>
     )
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("id-ID", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    })
   }
 
   const formatTime = (minutes: number) => {
@@ -457,108 +420,81 @@ function QuizCard({ quiz }: { quiz: Quiz }) {
     return `${hours} jam ${remainingMinutes > 0 ? `${remainingMinutes} menit` : ""}`
   }
 
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    })
+  }
+
   const getStatusColor = () => {
-    if (quiz.is_completed) return "border-l-green-500 bg-green-50/30"
-    if (quiz.attempt_count && quiz.attempt_count > 0) return "border-l-amber-500 bg-amber-50/30"
-    return "border-l-indigo-500 bg-indigo-50/30"
+    if (quiz.is_completed) return "border-l-green-500"
+    if (quiz.attempt_count && quiz.attempt_count > 0) return "border-l-amber-500"
+    return "border-l-[#8B5CF6]"
   }
 
   return (
-    <Card
-      className={`shadow-lg border-0 bg-white/90 backdrop-blur-sm hover:shadow-xl transition-all duration-300 border-l-4 ${getStatusColor()}`}
-    >
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <CardTitle className="text-lg line-clamp-2 mb-1">{quiz.title}</CardTitle>
-            <CardDescription className="text-sm">{quiz.material?.title || "Quiz Umum"}</CardDescription>
-          </div>
-          {getStatusBadge(quiz)}
-        </div>
-      </CardHeader>
-
-      <CardContent className="space-y-4">
-        <p className="text-sm text-muted-foreground line-clamp-2">{quiz.description}</p>
-
-        {/* Quiz Stats */}
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          <div className="flex items-center gap-2">
-            <div className="bg-blue-100 p-1.5 rounded-full">
-              <Target className="h-3 w-3 text-blue-600" />
-            </div>
-            <span className="font-medium">{quiz.total_questions} Soal</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="bg-yellow-100 p-1.5 rounded-full">
-              <Trophy className="h-3 w-3 text-yellow-600" />
-            </div>
-            <span className="font-medium">{quiz.total_points} Poin</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="bg-green-100 p-1.5 rounded-full">
-              <Clock className="h-3 w-3 text-green-600" />
-            </div>
-            <span className="font-medium">{formatTime(quiz.time_limit)}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="bg-purple-100 p-1.5 rounded-full">
-              <Users className="h-3 w-3 text-purple-600" />
-            </div>
-            <span className="font-medium">{quiz.creator?.name || "Admin"}</span>
+    <div className={`bg-white dark:bg-slate-800 rounded-lg p-3 sm:p-4 shadow-sm border-l-4 ${getStatusColor()}`}>
+      <div className="flex gap-3 sm:gap-4">
+        {/* Icon */}
+        <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700 flex-shrink-0">
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/20 dark:to-pink-900/20">
+            <Trophy className="h-6 w-6 sm:h-8 sm:w-8 text-[#8B5CF6]" />
           </div>
         </div>
 
-        {/* Difficulty and Date */}
-        <div className="flex items-center justify-between">
-          <Badge className={`${getDifficultyColor(quiz.difficulty_level)} border font-medium`}>
-            {getDifficultyLabel(quiz.difficulty_level)}
-          </Badge>
-          <span className="text-xs text-muted-foreground">{formatDate(quiz.created_at)}</span>
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between mb-2">
+            <h3 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white line-clamp-2 pr-2">
+              {quiz.title}
+            </h3>
+            {getStatusBadge(quiz)}
+          </div>
+
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1">
+            {quiz.material?.title || "Quiz Umum"}
+          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-500 line-clamp-2 mb-3">{quiz.description}</p>
+
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs text-gray-500 dark:text-gray-400 mb-3">
+            <span className="flex items-center gap-1">
+              <Target className="h-3 w-3" />
+              {quiz.total_questions} soal
+            </span>
+            <span className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              {formatTime(quiz.time_limit)}
+            </span>
+            <span className="flex items-center gap-1">
+              <Users className="h-3 w-3" />
+              {quiz.creator?.name || "Admin"}
+            </span>
+            <span className="flex items-center gap-1">
+              <Calendar className="h-3 w-3" />
+              {formatDate(quiz.created_at)}
+            </span>
+          </div>
+
+          <div className="mb-3">
+            <Badge className={`${getDifficultyColor(quiz.difficulty_level)} text-xs`}>
+              {getDifficultyLabel(quiz.difficulty_level)}
+            </Badge>
+          </div>
+
+          <Link href={`/student/quizzes/${quiz.id}`}>
+            <Button className="w-full bg-[#8B5CF6] hover:bg-[#7C3AED] text-white text-sm sm:text-base h-9 sm:h-10 font-semibold">
+              <Zap className="mr-2 h-4 w-4" />
+              {quiz.is_completed
+                ? "Lihat Detail"
+                : quiz.attempt_count && quiz.attempt_count > 0
+                  ? "Lanjutkan Quiz"
+                  : "Mulai Quiz"}
+            </Button>
+          </Link>
         </div>
-
-        {/* Progress Info - PERBAIKAN: Tampilkan best_score yang benar */}
-        {/* {quiz.is_completed && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-            <div className="flex items-center justify-between text-sm mb-1">
-              <span className="text-green-700 dark:text-green-400 font-medium">Skor Terbaik:</span>
-              <span className="font-bold text-green-700 dark:text-green-400">
-                {quiz.best_score || quiz.score}/{quiz.total_points}
-              </span>
-            </div>
-            {quiz.attempt_count && quiz.attempt_count > 1 && (
-              <div className="text-xs text-green-600 dark:text-green-500">
-                Dicapai dalam {quiz.attempt_count} percobaan
-              </div>
-            )}
-          </div>
-        )}
-
-        {quiz.attempt_count && quiz.attempt_count > 0 && !quiz.is_completed && (
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-            <div className="text-sm text-amber-700 dark:text-amber-400 font-medium">
-              Percobaan: {quiz.attempt_count}
-              {quiz.max_attempts && ` / ${quiz.max_attempts}`}
-            </div>
-            {quiz.last_attempt_at && (
-              <div className="text-xs text-amber-600 dark:text-amber-500 mt-1">
-                Terakhir: {formatDate(quiz.last_attempt_at)}
-              </div>
-            )}
-          </div>
-        )} */}
-      </CardContent>
-
-      <CardContent className="pt-0">
-        <Link href={`/student/quizzes/${quiz.id}`} className="block">
-          <Button className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white border-0 shadow-lg">
-            {quiz.is_completed
-              ? "Lihat Detail"
-              : quiz.attempt_count && quiz.attempt_count > 0
-                ? "Lanjutkan Quiz"
-                : "Mulai Quiz"}
-          </Button>
-        </Link>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }

@@ -3,17 +3,20 @@
 import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   ArrowLeft,
   Play,
   BookOpen,
   Clock,
   Target,
-  Award,
   Brain,
   Zap,
   TrendingUp,
+  CheckCircle,
+  Users,
+  Calendar,
+  Star,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
@@ -38,6 +41,7 @@ interface Exercise {
   is_completed?: boolean;
   score?: number;
   attempt_count?: number;
+  created_at?: string;
 }
 
 export default function ExerciseOverviewPage({
@@ -128,245 +132,273 @@ export default function ExerciseOverviewPage({
   const getDifficultyColor = (level: number) => {
     const colors = [
       "",
-      "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 border-green-200",
-      "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400 border-blue-200",
-      "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400 border-yellow-200",
-      "bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400 border-orange-200",
-      "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400 border-red-200",
+      "bg-green-100 text-green-800",
+      "bg-blue-100 text-blue-800",
+      "bg-yellow-100 text-yellow-800",
+      "bg-orange-100 text-orange-800",
+      "bg-red-100 text-red-800",
     ];
-    return (
-      colors[level] ||
-      "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400 border-gray-200"
-    );
+    return colors[level] || "bg-gray-100 text-gray-800";
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
   };
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex justify-center items-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#3B82F6]"></div>
+          <p className="text-muted-foreground">Memuat data latihan...</p>
+        </div>
       </div>
     );
   }
 
   if (!exercise) {
     return (
-      <div className="text-center py-12">
-        <h3 className="text-lg font-medium text-muted-foreground mb-2">
-          Latihan tidak ditemukan
-        </h3>
-        <Link href="/student/exercises">
-          <Button>Kembali ke Daftar Latihan</Button>
-        </Link>
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex justify-center items-center">
+        <div className="text-center py-12">
+          <Target className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+            Latihan tidak ditemukan
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            Latihan yang Anda cari tidak tersedia
+          </p>
+          <Link href="/student/exercises">
+            <Button className="bg-[#3B82F6] hover:bg-[#2563EB]">
+              Kembali ke Daftar Latihan
+            </Button>
+          </Link>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-slate-900 dark:to-slate-800">
-      <div className="container mx-auto py-8 space-y-8 max-w-4xl">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
+      <div className="container mx-auto py-4 px-3 sm:py-6 sm:px-4 space-y-4 sm:space-y-6 max-w-4xl">
         {/* Header */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 sm:gap-4">
           <Link href="/student/exercises">
-            <Button variant="outline" size="icon" className="shadow-lg">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8 sm:h-10 sm:w-10 shadow-sm"
+            >
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
-          <div className="flex-1">
-            <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white line-clamp-2">
               {exercise.title}
             </h1>
-            <p className="text-muted-foreground text-lg mt-1">
-              Material: {exercise.material.title}
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-1">
+              Materi: {exercise.material.title}
             </p>
           </div>
         </div>
 
-        {/* Exercise Info Cards */}
-        <div className="grid gap-6 md:grid-cols-4">
-          <Card className="shadow-lg border-0 bg-gradient-to-br from-blue-500 to-blue-600 text-white">
-            <CardContent className="flex items-center gap-3 p-6">
-              <div className="bg-white/20 p-3 rounded-full">
-                <Target className="h-6 w-6" />
+        {/* Statistics */}
+        <div className="rounded-xl bg-gradient-to-br from-[#06b6d4] to-[#0284c7] dark:from-[#1E3A8A] dark:to-[#1E40AF] p-4 sm:p-6 shadow-md">
+          <div className="grid grid-cols-4 gap-4 text-center">
+            <div className="flex flex-col items-center justify-center gap-1">
+              <div className="text-2xl sm:text-3xl font-bold text-white">
+                {exercise.total_questions}
               </div>
-              <div>
-                <div className="text-2xl font-bold">
-                  {exercise.total_questions}
-                </div>
-                <div className="text-blue-100 text-sm">Total Soal</div>
+              <p className="text-xs sm:text-sm text-white/90 font-medium">
+                Soal
+              </p>
+            </div>
+            <div className="flex flex-col items-center justify-center gap-1">
+              <div className="text-2xl sm:text-3xl font-bold text-white">
+                {exercise.total_points}
               </div>
-            </CardContent>
-          </Card>
+              <p className="text-xs sm:text-sm text-white/90 font-medium">
+                Poin
+              </p>
+            </div>
 
-          <Card className="shadow-lg border-0 bg-gradient-to-br from-amber-500 to-orange-600 text-white">
-            <CardContent className="flex items-center gap-3 p-6">
-              <div className="bg-white/20 p-3 rounded-full">
-                <Award className="h-6 w-6" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold">
-                  {exercise.total_points}
-                </div>
-                <div className="text-amber-100 text-sm">Total Poin</div>
-              </div>
-            </CardContent>
-          </Card>
+            {/* Spacer kosong biar bisa tengah */}
 
-          {/* <Card className="shadow-lg border-0 bg-gradient-to-br from-green-500 to-emerald-600 text-white">
-            <CardContent className="flex items-center gap-3 p-6">
-              <div className="bg-white/20 p-3 rounded-full">
-                <Clock className="h-6 w-6" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold">~{Math.ceil(exercise.total_questions * 2)}</div>
-                <div className="text-green-100 text-sm">Menit</div>
-              </div>
-            </CardContent>
-          </Card> */}
-
-          {/* <Card className="shadow-lg border-0 bg-white/90 backdrop-blur-sm">
-            <CardContent className="flex items-center justify-center p-6">
-              <div
-                className={`px-4 py-2 rounded-full text-sm font-medium border ${getDifficultyColor(exercise.difficulty_level)}`}
-              >
+            <div className="flex flex-col items-center justify-center gap-1 col-span-1">
+              <div className="text-lg sm:text-xl font-bold text-white">
                 {getDifficultyLabel(exercise.difficulty_level)}
               </div>
-            </CardContent>
-          </Card> */}
-          <Card className="sshadow-lg border-0 bg-gradient-to-br from-neutral-500 to-neutral-600 text-white">
-            <CardContent className="flex items-center gap-3 p-4">
-              <div className="bg-white/20 p-3 rounded-full">
-                <TrendingUp className="h-6 w-6" />
-              </div>
-              <div>
-                <div className="text-xl font-bold my-1">Tingkat Kesulitan</div>
-                <div
-                  className={`px-4 py-2 rounded-full text-sm font-medium border text-center ${getDifficultyColor(
-                    exercise.difficulty_level
-                  )}`}
-                >
-                  {getDifficultyLabel(exercise.difficulty_level)}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              <p className="text-xs sm:text-sm text-white/90 font-medium">
+                Tingkat
+              </p>
+            </div>
+          </div>
 
-        {/* Description */}
-        <Card className="shadow-lg border-0 bg-white/90 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5 text-blue-600" />
-              Deskripsi Latihan
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground leading-relaxed text-lg">
-              {exercise.description}
-            </p>
-          </CardContent>
-        </Card>
+          <div className="h-1 w-16 bg-white/30 rounded-full mt-4 mx-auto"></div>
+        </div>
 
         {/* Progress Status */}
         {exercise.is_completed && (
-          <Card className="shadow-lg border-0 border-l-4 border-l-green-500 bg-green-50/80 backdrop-blur-sm">
-            <CardContent className="flex items-center gap-4 p-6">
-              <div className="h-12 w-12 rounded-full bg-green-500 flex items-center justify-center shadow-lg">
-                <Award className="h-6 w-6 text-white" />
+          <div className="bg-white dark:bg-slate-800 rounded-lg p-3 sm:p-4 shadow-sm border-l-4 border-l-green-500">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+                <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
               </div>
-              <div>
-                <div className="font-semibold text-green-800 text-lg">
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-sm sm:text-base text-green-800 dark:text-green-400">
                   Latihan Sudah Diselesaikan
-                </div>
-                <div className="text-green-600">
-                  Skor: {exercise.score} / {exercise.total_points} | Percobaan:{" "}
+                </h3>
+                <p className="text-xs sm:text-sm text-green-600 dark:text-green-500">
+                  Skor: {exercise.score}/{exercise.total_points} • Percobaan:{" "}
                   {exercise.attempt_count}
-                </div>
+                </p>
               </div>
-            </CardContent>
-          </Card>
+              <Badge className="bg-green-100 text-green-800 text-xs">
+                <Star className="h-3 w-3 mr-1" />
+                Selesai
+              </Badge>
+            </div>
+          </div>
         )}
-        <Card className="shadow-lg border-0 bg-white/90 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Target className="h-5 w-5 text-blue-600" />
-              Petunjuk Pengerjaan
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-start gap-4">
-              <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white flex items-center justify-center text-sm font-bold shadow-lg">
-                1
-              </div>
-              <p className="text-muted-foreground pt-1">
-                Tonton video pembelajaran terlebih dahulu untuk memahami materi
-              </p>
-            </div>
-            <div className="flex items-start gap-4">
-              <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white flex items-center justify-center text-sm font-bold shadow-lg">
-                2
-              </div>
-              <p className="text-muted-foreground pt-1">
-                Kerjakan latihan dengan memilih jawaban yang paling tepat
-              </p>
-            </div>
-            <div className="flex items-start gap-4">
-              <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white flex items-center justify-center text-sm font-bold shadow-lg">
-                3
-              </div>
-              <p className="text-muted-foreground pt-1">
-                Dapatkan feedback langsung setelah menjawab setiap soal
-              </p>
-            </div>
-            <div className="flex items-start gap-4">
-              <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white flex items-center justify-center text-sm font-bold shadow-lg">
-                4
-              </div>
-              <p className="text-muted-foreground pt-1">
-                Anda dapat mengulang latihan untuk meningkatkan skor
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-        {/* Action Buttons */}
-        <div className="grid gap-6 md:grid-cols-2">
-          <Link href={`/student/exercises/${exercise.id}/video`}>
-            <Card className="cursor-pointer hover:shadow-xl transition-all duration-300 border-0 shadow-lg bg-white/90 backdrop-blur-sm border-l-4 border-l-blue-500">
-              <CardContent className="flex items-center gap-6 p-8">
-                <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
-                  <Play className="h-8 w-8 text-white" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-bold text-xl mb-2">
-                    Tonton Video Pembelajaran
-                  </h3>
-                  <p className="text-muted-foreground">
-                    Pelajari materi melalui video sebelum mengerjakan latihan
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
 
-          <Link href={`/student/exercises/${exercise.id}/practice`}>
-            <Card className="cursor-pointer hover:shadow-xl transition-all duration-300 border-0 shadow-lg bg-white/90 backdrop-blur-sm border-l-4 border-l-green-500">
-              <CardContent className="flex items-center gap-6 p-8">
-                <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg">
-                  <Zap className="h-8 w-8 text-white" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-bold text-xl mb-2">
-                    Mulai Mengerjakan Latihan
-                  </h3>
-                  <p className="text-muted-foreground">
-                    Kerjakan soal-soal latihan untuk menguji pemahaman
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
+        {/* Description */}
+        <div className="bg-white dark:bg-slate-800 rounded-lg p-3 sm:p-4 shadow-sm">
+          <div className="flex items-center gap-2 mb-3">
+            <BookOpen className="h-4 w-4 sm:h-5 sm:w-5 text-[#3B82F6]" />
+            <h2 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white">
+              Deskripsi Latihan
+            </h2>
+          </div>
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+            {exercise.description}
+          </p>
+        </div>
+
+        {/* Exercise Info */}
+        <div className="bg-white dark:bg-slate-800 rounded-lg p-3 sm:p-4 shadow-sm">
+          <div className="flex items-center gap-2 mb-3">
+            <Target className="h-4 w-4 sm:h-5 sm:w-5 text-[#3B82F6]" />
+            <h2 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white">
+              Informasi Latihan
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
+            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+              <Users className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span>Dibuat oleh: {exercise.creator.name}</span>
+            </div>
+            {exercise.created_at && (
+              <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span>Dibuat: {formatDate(exercise.created_at)}</span>
+              </div>
+            )}
+            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+              <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4" />
+              <Badge
+                className={`${getDifficultyColor(
+                  exercise.difficulty_level
+                )} text-xs`}
+              >
+                {getDifficultyLabel(exercise.difficulty_level)}
+              </Badge>
+            </div>
+            {/* <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+              <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span>Estimasi: ~{Math.ceil(exercise.total_questions * 1.5)} menit</span>
+            </div> */}
+          </div>
         </div>
 
         {/* Instructions */}
+        <div className="bg-white dark:bg-slate-800 rounded-lg p-3 sm:p-4 shadow-sm">
+          <div className="flex items-center gap-2 mb-3">
+            <Brain className="h-4 w-4 sm:h-5 sm:w-5 text-[#3B82F6]" />
+            <h2 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white">
+              Petunjuk Pengerjaan
+            </h2>
+          </div>
+          <div className="space-y-3">
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full bg-[#3B82F6] text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
+                1
+              </div>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 pt-0.5">
+                Tonton video pembelajaran terlebih dahulu untuk memahami materi
+              </p>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full bg-[#3B82F6] text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
+                2
+              </div>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 pt-0.5">
+                Kerjakan latihan dengan memilih jawaban yang paling tepat
+              </p>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full bg-[#3B82F6] text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
+                3
+              </div>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 pt-0.5">
+                Dapatkan feedback langsung setelah menjawab setiap soal
+              </p>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full bg-[#3B82F6] text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
+                4
+              </div>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 pt-0.5">
+                Anda dapat mengulang latihan untuk meningkatkan skor
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="grid gap-3 sm:gap-4">
+          <Link href={`/student/exercises/${exercise.id}/video`}>
+            <div className="bg-white dark:bg-slate-800 rounded-lg p-3 sm:p-4 shadow-sm border-l-4 border-l-[#3B82F6] hover:shadow-md transition-shadow cursor-pointer">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-[#3B82F6] to-[#1E40AF] flex items-center justify-center flex-shrink-0">
+                  <Play className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white mb-1">
+                    Tonton Video Pembelajaran
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                    Pelajari materi melalui video sebelum mengerjakan latihan
+                  </p>
+                </div>
+              </div>
+            </div>
+          </Link>
+
+          <Link href={`/student/exercises/${exercise.id}/practice`}>
+            <div className="bg-white dark:bg-slate-800 rounded-lg p-3 sm:p-4 shadow-sm border-l-4 border-l-green-500 hover:shadow-md transition-shadow cursor-pointer">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center flex-shrink-0">
+                  <Zap className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white mb-1">
+                    {exercise.is_completed
+                      ? "Ulangi Latihan"
+                      : "Mulai Mengerjakan Latihan"}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                    {exercise.is_completed
+                      ? "Kerjakan ulang untuk meningkatkan skor Anda"
+                      : "Kerjakan soal-soal latihan untuk menguji pemahaman"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </Link>
+        </div>
       </div>
     </div>
   );

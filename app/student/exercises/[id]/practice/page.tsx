@@ -2,18 +2,15 @@
 
 import type React from "react"
 import { useApi } from "@/hooks/use-api"
-
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { useToast } from "@/hooks/use-toast"
-import { Skeleton } from "@/components/ui/skeleton"
 import {
   ArrowLeft,
   CheckCircle,
@@ -23,13 +20,13 @@ import {
   Clock,
   Play,
   Pause,
-  RepeatIcon as Replay,
+  RefreshCw,
   Loader2,
   AlertCircle,
   Trophy,
   Target,
   Award,
-  RefreshCw,
+  Zap,
 } from "lucide-react"
 
 interface ExerciseOption {
@@ -147,16 +144,17 @@ export default function ExercisePracticePage() {
   const [startTime, setStartTime] = useState<Date | null>(null)
   const [elapsedTime, setElapsedTime] = useState(0)
 
-  // Video states
+  // Video states - IMPROVED for iOS compatibility
   const [videoLoading, setVideoLoading] = useState(true)
   const [videoError, setVideoError] = useState<string | null>(null)
   const [isVideoPlaying, setIsVideoPlaying] = useState(false)
   const [hasWatchedVideo, setHasWatchedVideo] = useState(false)
+  const [videoCanPlay, setVideoCanPlay] = useState(false)
 
   // Progress tracking state
   const [isNewAttempt, setIsNewAttempt] = useState(false)
   const [progressData, setProgressData] = useState<any>(null)
-  const {buildUrl} = useApi()
+  const { buildUrl } = useApi()
 
   // Initialize exercise
   useEffect(() => {
@@ -180,8 +178,8 @@ export default function ExercisePracticePage() {
     setVideoError(null)
     setHasWatchedVideo(false)
     setIsVideoPlaying(false)
+    setVideoCanPlay(false)
   }, [currentQuestionIndex])
-
 
   const fetchExercise = async () => {
     try {
@@ -196,11 +194,7 @@ export default function ExercisePracticePage() {
         return
       }
 
-      console.log("🚀 Fetching exercise with ID:", id)
-
       const url = buildUrl(`/api/exercises/${id}`)
-      console.log("📡 Request URL:", url)
-
       const response = await fetch(url, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -209,8 +203,6 @@ export default function ExercisePracticePage() {
           "X-Requested-With": "XMLHttpRequest",
         },
       })
-
-      console.log("📥 Response status:", response.status)
 
       if (response.status === 401) {
         toast({
@@ -225,51 +217,33 @@ export default function ExercisePracticePage() {
 
       if (!response.ok) {
         const errorText = await response.text()
-        console.error("❌ Response error:", errorText)
         throw new Error(`HTTP ${response.status}: ${errorText}`)
       }
 
       const data = await response.json()
-      console.log("✅ Exercise data received:", data)
-      console.log("📊 Total questions:", data.questions?.length || 0)
 
-      // Validasi data exercise
       if (!data.questions || data.questions.length === 0) {
         throw new Error("Exercise tidak memiliki soal yang tersedia")
       }
 
-      // Calculate total questions and points dynamically
       data.total_questions = data.questions.length
       data.total_points = data.questions.reduce((sum: number, q: ExerciseQuestion) => sum + (q.points || 10), 0)
 
       setExercise(data)
-
-      // Cek progress dari backend untuk menentukan starting point
       await checkExerciseProgress(data.id)
     } catch (error) {
-      console.error("💥 Error fetching exercise:", error)
-
+      console.error("Error fetching exercise:", error)
       const errorMessage = error instanceof Error ? error.message : "Terjadi kesalahan saat memuat data"
-
-      if (error instanceof TypeError && errorMessage.includes("Failed to fetch")) {
-        toast({
-          title: "Koneksi Gagal",
-          description: "Tidak dapat terhubung ke server. Pastikan backend Laravel berjalan",
-          variant: "destructive",
-        })
-      } else {
-        toast({
-          title: "Error",
-          description: errorMessage,
-          variant: "destructive",
-        })
-      }
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      })
     } finally {
       setLoading(false)
     }
   }
 
-  // PERBAIKAN: Method untuk check progress dengan logika yang lebih baik
   const checkExerciseProgress = async (exerciseId: number) => {
     try {
       const token = localStorage.getItem("token")
@@ -282,80 +256,102 @@ export default function ExercisePracticePage() {
 
       if (response.ok) {
         const progressData = await response.json()
-        console.log("📊 Progress data:", progressData)
         setProgressData(progressData)
 
-        // PERBAIKAN: Logika yang lebih tepat untuk menentukan status
         if (progressData.is_completed) {
-          console.log("✅ Exercise was previously completed")
-          // Jangan langsung set sebagai completed, biarkan user memulai ulang
           setIsCompleted(false)
           setCurrentQuestionIndex(0)
-
-          // Tampilkan info bahwa exercise sudah pernah diselesaikan
           toast({
             title: "Exercise Sudah Pernah Diselesaikan",
-            description: "Anda dapat mengulang exercise ini. Klik 'Ulangi Latihan' untuk memulai dari awal.",
+            description: "Anda dapat mengulang exercise ini.",
             variant: "default",
           })
         } else if (progressData.answered_questions > 0 && !progressData.is_completed) {
-          // PERBAIKAN: Gunakan current_question_index dari backend jika tersedia
           const nextQuestionIndex = progressData.current_question_index ?? progressData.answered_questions
-          console.log("📍 Continuing from question:", nextQuestionIndex + 1)
-
           if (exercise?.questions) {
             const maxIndex = exercise.questions.length - 1
             setCurrentQuestionIndex(Math.min(nextQuestionIndex, Math.max(0, maxIndex)))
           } else {
             setCurrentQuestionIndex(Math.min(nextQuestionIndex, 0))
           }
-
           toast({
             title: "Melanjutkan Progress",
             description: `Melanjutkan dari soal ${nextQuestionIndex + 1}`,
             variant: "default",
           })
         } else {
-          console.log("🆕 Starting fresh from question 1")
           setCurrentQuestionIndex(0)
         }
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Terjadi kesalahan"
-      console.error("Error checking progress:", error)
-      // Don't show toast for progress check errors, just log them
       console.warn("Progress check failed, starting from beginning")
       setCurrentQuestionIndex(0)
     }
   }
 
+  // IMPROVED: Better video URL handling for iOS
   const getVideoStreamUrl = (question: ExerciseQuestion) => {
-    // Use simple endpoint like in the working quiz version
     return buildUrl(`/exercise-video/${exercise?.id}/${question.id}`)
   }
 
+  // IMPROVED: Better error handling for iOS
   const handleVideoError = (e: React.SyntheticEvent<HTMLVideoElement>) => {
     const video = e.currentTarget
     const error = video.error
 
-    console.error("🚫 Video error:", {
+    console.error("Video error:", {
       code: error?.code,
       message: error?.message,
       src: video.src,
+      networkState: video.networkState,
+      readyState: video.readyState,
     })
 
     setVideoLoading(false)
-    setVideoError("Video gagal dimuat. Periksa koneksi internet Anda.")
+    setVideoCanPlay(false)
+
+    // More specific error messages
+    let errorMessage = "Video gagal dimuat."
+    if (error?.code === 4) {
+      errorMessage = "Format video tidak didukung oleh browser Anda."
+    } else if (error?.code === 3) {
+      errorMessage = "Video rusak atau tidak dapat didekode."
+    } else if (error?.code === 2) {
+      errorMessage = "Koneksi internet bermasalah."
+    }
+
+    setVideoError(errorMessage)
   }
 
+  // IMPROVED: Better retry mechanism
   const retryVideo = () => {
     setVideoError(null)
     setVideoLoading(true)
+    setVideoCanPlay(false)
 
     const videoElement = document.querySelector("video") as HTMLVideoElement
     if (videoElement) {
+      // Force reload for iOS
       videoElement.load()
+      // Try to play after a short delay
+      setTimeout(() => {
+        videoElement.play().catch((err) => {
+          console.warn("Auto-play failed:", err)
+        })
+      }, 500)
     }
+  }
+
+  const handleVideoLoadStart = () => {
+    console.log("Video loading started")
+    setVideoLoading(true)
+    setVideoCanPlay(false)
+  }
+
+  const handleVideoCanPlay = () => {
+    console.log("Video can play")
+    setVideoLoading(false)
+    setVideoCanPlay(true)
   }
 
   const handleVideoPlay = () => {
@@ -373,7 +369,6 @@ export default function ExercisePracticePage() {
 
   const handleVideoTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
     const video = e.currentTarget
-    // Mark as watched if user has watched at least 50% of the video
     if (video.currentTime / video.duration >= 0.5) {
       setHasWatchedVideo(true)
     }
@@ -383,7 +378,9 @@ export default function ExercisePracticePage() {
     const videoElement = document.querySelector("video") as HTMLVideoElement
     if (videoElement) {
       videoElement.currentTime = 0
-      videoElement.play()
+      videoElement.play().catch((err) => {
+        console.warn("Replay failed:", err)
+      })
     }
   }
 
@@ -414,11 +411,6 @@ export default function ExercisePracticePage() {
       const currentQuestion = exercise.questions[currentQuestionIndex]
       const url = buildUrl(`/api/exercises/${id}/questions/${currentQuestion.id}/answer`)
 
-      console.log("📤 Submitting answer to:", url)
-      console.log("📤 Question ID:", currentQuestion.id)
-      console.log("📤 Selected option:", selectedOption)
-      console.log("📤 Current question index:", currentQuestionIndex)
-
       const response = await fetch(url, {
         method: "POST",
         headers: {
@@ -429,11 +421,9 @@ export default function ExercisePracticePage() {
         },
         body: JSON.stringify({
           selected_option_id: Number.parseInt(selectedOption),
-          current_question_index: currentQuestionIndex, // Kirim index untuk tracking
+          current_question_index: currentQuestionIndex,
         }),
       })
-
-      console.log("📥 Submit response status:", response.status)
 
       if (response.status === 401) {
         toast({
@@ -448,27 +438,14 @@ export default function ExercisePracticePage() {
 
       if (response.ok) {
         const feedbackData = await response.json()
-        console.log("✅ Feedback received:", feedbackData)
-
         setFeedback(feedbackData)
         setShowFeedback(true)
 
-        // PERBAIKAN: Update elapsed time untuk final results
         if (feedbackData.final_results) {
           feedbackData.final_results.time_taken = elapsedTime
         }
-
-        // PERBAIKAN: Cek apakah ini benar-benar soal terakhir
-        console.log("🔍 Is last question check:", {
-          is_last_question: feedbackData.is_last_question,
-          current_index: currentQuestionIndex,
-          total_questions: exercise.questions.length,
-          answered_questions: feedbackData.current_progress?.answered_questions,
-        })
       } else {
         const errorData = await response.json().catch(() => ({ message: "Unknown error" }))
-        console.error("❌ Submit error:", errorData)
-
         toast({
           title: "Error",
           description: errorData.message || "Gagal mengirim jawaban",
@@ -477,7 +454,6 @@ export default function ExercisePracticePage() {
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Terjadi kesalahan"
-      console.error("Error:", error)
       toast({
         title: "Error",
         description: errorMessage,
@@ -490,43 +466,27 @@ export default function ExercisePracticePage() {
 
   const handleNextQuestion = () => {
     if (feedback?.is_last_question) {
-      // Don't proceed to next question if it's the last one
-      console.log("🛑 This is the last question, not proceeding to next")
       return
     }
 
-    // PERBAIKAN: Gunakan next_question_index dari feedback atau increment manual
     const nextIndex = feedback?.current_progress?.next_question_index ?? currentQuestionIndex + 1
-
-    console.log("➡️ Moving to next question:", {
-      current_index: currentQuestionIndex,
-      next_index: nextIndex,
-      total_questions: exercise!.questions.length,
-      feedback_next_index: feedback?.current_progress?.next_question_index,
-    })
 
     if (nextIndex < exercise!.questions.length) {
       setCurrentQuestionIndex(nextIndex)
       setSelectedOption("")
       setShowFeedback(false)
       setFeedback(null)
-    } else {
-      console.log("🏁 Reached end of questions")
     }
   }
 
   const handleShowFinalResults = () => {
-    console.log("🏆 Showing final results")
     setShowFinalResults(true)
     setIsCompleted(true)
   }
 
-  // PERBAIKAN: Reset exercise dengan proper cleanup
   const resetExercise = async () => {
     try {
       const token = localStorage.getItem("token")
-      console.log("🔄 Resetting exercise...")
-
       const response = await fetch(buildUrl(`/api/exercises/${id}/reset`), {
         method: "POST",
         headers: {
@@ -537,9 +497,6 @@ export default function ExercisePracticePage() {
       })
 
       if (response.ok) {
-        console.log("✅ Exercise reset successful")
-
-        // PERBAIKAN: Reset semua states dengan benar
         setCurrentQuestionIndex(0)
         setSelectedOption("")
         setShowFeedback(false)
@@ -552,7 +509,6 @@ export default function ExercisePracticePage() {
         setIsNewAttempt(true)
         setProgressData(null)
 
-        // PERBAIKAN: Refresh exercise data setelah reset
         await fetchExercise()
 
         toast({
@@ -561,7 +517,6 @@ export default function ExercisePracticePage() {
         })
       } else {
         const errorData = await response.json()
-        console.error("❌ Reset failed:", errorData)
         toast({
           title: "Error",
           description: errorData.message || "Gagal mereset latihan",
@@ -570,7 +525,6 @@ export default function ExercisePracticePage() {
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Terjadi kesalahan"
-      console.error("Error:", error)
       toast({
         title: "Error",
         description: errorMessage,
@@ -586,73 +540,28 @@ export default function ExercisePracticePage() {
   }
 
   const getDifficultyColor = (level: number) => {
-    switch (level) {
-      case 1:
-        return "bg-green-100 text-green-800"
-      case 2:
-        return "bg-blue-100 text-blue-800"
-      case 3:
-        return "bg-yellow-100 text-yellow-800"
-      case 4:
-        return "bg-orange-100 text-orange-800"
-      case 5:
-        return "bg-red-100 text-red-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
+    const colors = [
+      "",
+      "bg-green-100 text-green-800",
+      "bg-blue-100 text-blue-800",
+      "bg-yellow-100 text-yellow-800",
+      "bg-orange-100 text-orange-800",
+      "bg-red-100 text-red-800",
+    ]
+    return colors[level] || "bg-gray-100 text-gray-800"
   }
 
   const getDifficultyText = (level: number) => {
-    switch (level) {
-      case 1:
-        return "Mudah"
-      case 2:
-        return "Sedang"
-      case 3:
-        return "Menengah"
-      case 4:
-        return "Sulit"
-      case 5:
-        return "Sangat Sulit"
-      default:
-        return "Unknown"
-    }
+    const labels = ["", "Sangat Mudah", "Mudah", "Sedang", "Sulit", "Sangat Sulit"]
+    return labels[level] || "Tidak Diketahui"
   }
 
   if (loading) {
     return (
-      <div className="flex flex-col gap-6 max-w-6xl mx-auto p-6">
-        <div className="flex items-center gap-4">
-          <Skeleton className="h-10 w-10" />
-          <div className="flex-1">
-            <Skeleton className="h-8 w-64 mb-2" />
-            <Skeleton className="h-4 w-96" />
-          </div>
-        </div>
-        <Skeleton className="h-2 w-full" />
-        <div className="grid gap-6 lg:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <Skeleton className="h-6 w-48" />
-              <Skeleton className="h-4 w-64" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="aspect-video w-full" />
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <Skeleton className="h-6 w-32" />
-              <Skeleton className="h-4 w-48" />
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Skeleton className="h-16 w-full" />
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
-            </CardContent>
-          </Card>
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex justify-center items-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-12 w-12 animate-spin text-[#3B82F6]" />
+          <p className="text-muted-foreground">Memuat latihan...</p>
         </div>
       </div>
     )
@@ -660,54 +569,33 @@ export default function ExercisePracticePage() {
 
   if (!exercise) {
     return (
-      <div className="text-center py-12">
-        <AlertCircle className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-muted-foreground mb-2">Latihan tidak ditemukan</h3>
-        <p className="text-sm text-muted-foreground mb-4">Latihan yang Anda cari tidak tersedia atau telah dihapus.</p>
-        <Link href="/student/exercises">
-          <Button>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Kembali ke Daftar Latihan
-          </Button>
-        </Link>
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex justify-center items-center">
+        <div className="text-center py-12">
+          <AlertCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Latihan tidak ditemukan</h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">Latihan yang Anda cari tidak tersedia.</p>
+          <Link href="/student/exercises">
+            <Button className="bg-[#3B82F6] hover:bg-[#2563EB]">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Kembali ke Daftar Latihan
+            </Button>
+          </Link>
+        </div>
       </div>
     )
   }
 
-  // Check if exercise has no questions or only one question when it should have more
   if (exercise.questions.length === 0) {
     return (
-      <div className="text-center py-12">
-        <AlertCircle className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-muted-foreground mb-2">Tidak ada soal tersedia</h3>
-        <p className="text-sm text-muted-foreground mb-4">Latihan ini belum memiliki soal yang dapat dikerjakan.</p>
-        <Link href="/student/exercises">
-          <Button>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Kembali ke Daftar Latihan
-          </Button>
-        </Link>
-      </div>
-    )
-  }
-
-  // Show warning if questions seem incomplete
-  if (exercise.total_questions > exercise.questions.length) {
-    return (
-      <div className="text-center py-12">
-        <AlertCircle className="h-16 w-16 text-orange-500 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-muted-foreground mb-2">Data Latihan Tidak Lengkap</h3>
-        <p className="text-sm text-muted-foreground mb-4">
-          Latihan ini seharusnya memiliki {exercise.total_questions} soal, tetapi hanya {exercise.questions.length} soal
-          yang tersedia.
-        </p>
-        <div className="flex gap-4 justify-center">
-          <Button onClick={resetExercise}>
-            <RotateCcw className="mr-2 h-4 w-4" />
-            Muat Ulang Latihan
-          </Button>
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex justify-center items-center">
+        <div className="text-center py-12">
+          <AlertCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Tidak ada soal tersedia</h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            Latihan ini belum memiliki soal yang dapat dikerjakan.
+          </p>
           <Link href="/student/exercises">
-            <Button variant="outline">
+            <Button className="bg-[#3B82F6] hover:bg-[#2563EB]">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Kembali ke Daftar Latihan
             </Button>
@@ -719,21 +607,24 @@ export default function ExercisePracticePage() {
 
   const currentQuestion = exercise.questions[currentQuestionIndex]
 
-  // Safety check for current question
   if (!currentQuestion) {
     return (
-      <div className="text-center py-12">
-        <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-muted-foreground mb-2">Soal tidak ditemukan</h3>
-        <p className="text-sm text-muted-foreground mb-4">
-          Soal pada index {currentQuestionIndex} tidak tersedia. Total soal: {exercise.questions.length}
-        </p>
-        <div className="flex gap-4 justify-center">
-          <Button onClick={() => setCurrentQuestionIndex(0)}>Kembali ke Soal Pertama</Button>
-          <Button onClick={resetExercise} variant="outline">
-            <RotateCcw className="mr-2 h-4 w-4" />
-            Muat Ulang Latihan
-          </Button>
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex justify-center items-center">
+        <div className="text-center py-12">
+          <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Soal tidak ditemukan</h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            Soal pada index {currentQuestionIndex} tidak tersedia.
+          </p>
+          <div className="flex gap-4 justify-center">
+            <Button onClick={() => setCurrentQuestionIndex(0)} className="bg-[#3B82F6] hover:bg-[#2563EB]">
+              Kembali ke Soal Pertama
+            </Button>
+            <Button onClick={resetExercise} variant="outline">
+              <RotateCcw className="mr-2 h-4 w-4" />
+              Muat Ulang Latihan
+            </Button>
+          </div>
         </div>
       </div>
     )
@@ -749,62 +640,63 @@ export default function ExercisePracticePage() {
     const isPassingGrade = results.percentage >= 70
 
     return (
-      <div className="flex flex-col gap-6 max-w-4xl mx-auto p-6">
-        <div className="flex items-center gap-4">
-          <Link href="/student/exercises">
-            <Button variant="outline" size="icon">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <h1 className="text-3xl font-bold tracking-tight">Latihan Selesai</h1>
-        </div>
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
+        <div className="container mx-auto py-4 px-3 sm:py-6 sm:px-4 space-y-4 sm:space-y-6 max-w-4xl">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <Link href="/student/exercises">
+              <Button variant="outline" size="icon" className="h-8 w-8 sm:h-10 sm:w-10">
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </Link>
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">Latihan Selesai</h1>
+          </div>
 
-        <Card className="border-2 border-dashed border-primary/20">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              {isPassingGrade ? (
-                <div className="p-4 bg-green-100 rounded-full">
-                  <Trophy className="h-12 w-12 text-green-600" />
-                </div>
-              ) : (
-                <div className="p-4 bg-orange-100 rounded-full">
-                  <Target className="h-12 w-12 text-orange-600" />
-                </div>
-              )}
+          <div className="bg-white dark:bg-slate-800 rounded-lg p-4 sm:p-6 shadow-sm">
+            <div className="text-center mb-6">
+              <div className="flex justify-center mb-4">
+                {isPassingGrade ? (
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-green-100 rounded-full flex items-center justify-center">
+                    <Trophy className="h-8 w-8 sm:h-10 sm:w-10 text-green-600" />
+                  </div>
+                ) : (
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-orange-100 rounded-full flex items-center justify-center">
+                    <Target className="h-8 w-8 sm:h-10 sm:w-10 text-orange-600" />
+                  </div>
+                )}
+              </div>
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">{results.message}</h2>
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+                {exercise.title} • Percobaan ke-{results.attempt_number}
+              </p>
             </div>
-            <CardTitle className="text-2xl">{results.message}</CardTitle>
-            <CardDescription className="text-lg">
-              {exercise.title} • Percobaan ke-{results.attempt_number}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {/* Score Overview */}
-            <div className="grid grid-cols-2 gap-6 md:grid-cols-4 mb-8">
-              <div className="text-center p-4 bg-blue-50 rounded-lg">
-                <div className="text-3xl font-bold text-blue-600">{results.total_score}</div>
-                <div className="text-sm text-blue-600 font-medium">Skor Total</div>
-                <div className="text-xs text-muted-foreground">dari {results.max_score}</div>
+
+            {/* Statistics */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
+              <div className="text-center p-3 sm:p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <div className="text-2xl sm:text-3xl font-bold text-blue-600">{results.total_score}</div>
+                <div className="text-xs sm:text-sm text-blue-600 font-medium">Skor Total</div>
+                <div className="text-xs text-gray-500">dari {results.max_score}</div>
               </div>
-              <div className="text-center p-4 bg-green-50 rounded-lg">
-                <div className="text-3xl font-bold text-green-600">{results.percentage}%</div>
-                <div className="text-sm text-green-600 font-medium">Persentase</div>
-                <div className="text-xs text-muted-foreground">{isPassingGrade ? "Lulus" : "Belum Lulus"}</div>
+              <div className="text-center p-3 sm:p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                <div className="text-2xl sm:text-3xl font-bold text-green-600">{results.percentage}%</div>
+                <div className="text-xs sm:text-sm text-green-600 font-medium">Persentase</div>
+                <div className="text-xs text-gray-500">{isPassingGrade ? "Lulus" : "Belum Lulus"}</div>
               </div>
-              <div className="text-center p-4 bg-purple-50 rounded-lg">
-                <div className="text-3xl font-bold text-purple-600">
+              <div className="text-center p-3 sm:p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                <div className="text-2xl sm:text-3xl font-bold text-purple-600">
                   {results.correct_answers}/{results.total_questions}
                 </div>
-                <div className="text-sm text-purple-600 font-medium">Jawaban Benar</div>
-                <div className="text-xs text-muted-foreground">
+                <div className="text-xs sm:text-sm text-purple-600 font-medium">Benar</div>
+                <div className="text-xs text-gray-500">
                   {Math.round((results.correct_answers / results.total_questions) * 100)}% akurasi
                 </div>
               </div>
-              <div className="text-center p-4 bg-orange-50 rounded-lg">
-                <div className="text-3xl font-bold text-orange-600">
+              <div className="text-center p-3 sm:p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                <div className="text-2xl sm:text-3xl font-bold text-orange-600">
                   {formatTime(results.time_taken || elapsedTime)}
                 </div>
-                <div className="text-sm text-orange-600 font-medium">Waktu</div>
-                <div className="text-xs text-muted-foreground">Total waktu</div>
+                <div className="text-xs sm:text-sm text-orange-600 font-medium">Waktu</div>
+                <div className="text-xs text-gray-500">Total</div>
               </div>
             </div>
 
@@ -821,118 +713,119 @@ export default function ExercisePracticePage() {
 
             {/* Achievement Badge */}
             {isPassingGrade && (
-              <div className="text-center mb-6 p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
+              <div className="text-center mb-6 p-4 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-lg border border-green-200 dark:border-green-800">
                 <Award className="h-8 w-8 text-green-600 mx-auto mb-2" />
-                <p className="text-green-700 font-medium">Selamat! Anda telah lulus latihan ini</p>
-                <p className="text-sm text-green-600">Skor Anda melebihi batas kelulusan 70%</p>
+                <p className="text-green-700 dark:text-green-400 font-medium">Selamat! Anda telah lulus latihan ini</p>
+                <p className="text-sm text-green-600 dark:text-green-500">Skor Anda melebihi batas kelulusan 70%</p>
               </div>
             )}
 
             {/* Action Buttons */}
-            <div className="flex flex-col md:flex-row justify-center gap-4">
+            <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
               <Link href="/student/exercises">
-                <Button variant="outline" className="w-full md:w-auto">
+                <Button variant="outline" className="w-full sm:w-auto">
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Kembali ke Daftar Latihan
                 </Button>
               </Link>
               <Link href={`/student/exercises/${exercise.id}/video`}>
-                <Button variant="outline" className="w-full md:w-auto">
+                <Button variant="outline" className="w-full sm:w-auto">
                   <Eye className="mr-2 h-4 w-4" />
                   Tonton Video Lagi
                 </Button>
               </Link>
-              <Button onClick={resetExercise} className="w-full md:w-auto">
+              <Button onClick={resetExercise} className="w-full sm:w-auto bg-[#3B82F6] hover:bg-[#2563EB]">
                 <RotateCcw className="mr-2 h-4 w-4" />
                 Ulangi Latihan
               </Button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col gap-6 max-w-6xl mx-auto p-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href="/student/exercises">
-          <Button variant="outline" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div className="flex-1">
-          <h1 className="text-3xl font-bold tracking-tight">{exercise.title}</h1>
-          <p className="text-muted-foreground">Tonton video dan jawab pertanyaan yang diberikan</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Badge className={getDifficultyColor(exercise.difficulty_level)}>
-            {getDifficultyText(exercise.difficulty_level)}
-          </Badge>
-          <Link href={`/student/exercises/${exercise.id}/video`}>
-            <Button variant="outline">
-              <Eye className="mr-2 h-4 w-4" />
-              Lihat Semua Video
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
+      <div className="container mx-auto py-4 px-3 sm:py-6 sm:px-4 space-y-4 sm:space-y-6 max-w-6xl">
+        {/* Header */}
+        <div className="flex items-center gap-3 sm:gap-4">
+          <Link href="/student/exercises">
+            <Button variant="outline" size="icon" className="h-8 w-8 sm:h-10 sm:w-10">
+              <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
-        </div>
-      </div>
-
-      {/* Debug Info (remove in production) */}
-      {process.env.NODE_ENV === "development" && (
-        <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
-          Debug: Question {currentQuestionIndex + 1}/{exercise.questions.length} | Total Expected:{" "}
-          {exercise.total_questions} | Questions Loaded: {exercise.questions.length} | Progress:{" "}
-          {progressData?.answered_questions || 0} answered, completed: {progressData?.is_completed ? "Yes" : "No"}
-        </div>
-      )}
-
-      {/* Progress Bar */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between text-sm">
-          <span>Progress Latihan</span>
-          <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1">
-              <Clock className="h-4 w-4" />
-              {formatTime(elapsedTime)}
-            </span>
-            <span>
-              {feedback?.current_progress?.answered_questions ||
-                (showFeedback ? currentQuestionIndex + 1 : currentQuestionIndex)}{" "}
-              / {exercise.questions.length}
-            </span>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white line-clamp-2">
+              {exercise.title}
+            </h1>
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+              Tonton video dan jawab pertanyaan yang diberikan
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge className={`${getDifficultyColor(exercise.difficulty_level)} text-xs`}>
+              {getDifficultyText(exercise.difficulty_level)}
+            </Badge>
+            <Link href={`/student/exercises/${exercise.id}/video`}>
+              <Button variant="outline" size="sm" className="hidden sm:flex">
+                <Eye className="mr-2 h-4 w-4" />
+                Lihat Semua Video
+              </Button>
+            </Link>
           </div>
         </div>
-        <Progress value={progressPercentage} className="h-2" />
-      </div>
 
-      {/* Question Info */}
-      <div className="flex items-center justify-between">
-        <Badge variant="outline">
-          Soal {currentQuestionIndex + 1} dari {exercise.questions.length}
-        </Badge>
-        <div className="text-sm text-muted-foreground">{currentQuestion.points} poin</div>
-      </div>
+        {/* Progress Bar */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span>Progress Latihan</span>
+            <div className="flex items-center gap-4">
+              <span className="flex items-center gap-1">
+                <Clock className="h-4 w-4" />
+                {formatTime(elapsedTime)}
+              </span>
+              <span>
+                {feedback?.current_progress?.answered_questions ||
+                  (showFeedback ? currentQuestionIndex + 1 : currentQuestionIndex)}{" "}
+                / {exercise.questions.length}
+              </span>
+            </div>
+          </div>
+          <Progress value={progressPercentage} className="h-2" />
+        </div>
 
-      {/* Main Content Grid */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Video Player */}
-        <div className="order-1">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>Video: {currentQuestion.material_video.title}</span>
+        {/* Question Info */}
+        <div className="flex items-center justify-between">
+          <Badge variant="outline">
+            Soal {currentQuestionIndex + 1} dari {exercise.questions.length}
+          </Badge>
+          <div className="text-sm text-gray-600 dark:text-gray-400">{currentQuestion.points} poin</div>
+        </div>
+
+        {/* Main Content Grid */}
+        <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
+          {/* Video Player */}
+          <div className="order-1">
+            <div className="bg-white dark:bg-slate-800 rounded-lg p-3 sm:p-4 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white">
+                  Video: {currentQuestion.material_video.title}
+                </h3>
                 {hasWatchedVideo && (
-                  <Badge variant="secondary" className="text-green-600">
+                  <Badge className="bg-green-100 text-green-800 text-xs">
                     <CheckCircle className="h-3 w-3 mr-1" />
                     Ditonton
                   </Badge>
                 )}
-              </CardTitle>
-              <CardDescription>Tonton video ini untuk menjawab soal {currentQuestion.order}</CardDescription>
-            </CardHeader>
-            <CardContent>
+              </div>
+              {/* <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-3">
+                Tonton video ini untuk menjawab soal {currentQuestion.order}
+              </p> */}
+              {!hasWatchedVideo && (
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">💡 Tonton video hingga selesai</div>
+                )}
+
               <div className="aspect-video rounded-md bg-black flex items-center justify-center relative overflow-hidden">
                 {videoLoading && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
@@ -956,25 +849,23 @@ export default function ExercisePracticePage() {
                   </div>
                 )}
 
+                {/* IMPROVED: Better video element for iOS compatibility */}
                 <video
                   key={`${currentQuestion.id}-${currentQuestion.material_video.id}`}
                   className="w-full h-full object-contain"
                   controls
                   preload="metadata"
-                  onLoadStart={() => {
-                    console.log("⏳ Practice video loading started")
-                    setVideoLoading(true)
-                  }}
-                  onCanPlay={() => {
-                    console.log("✅ Practice video can play")
-                    setVideoLoading(false)
-                  }}
+                  playsInline // Important for iOS
+                  webkit-playsinline="true" // Legacy iOS support
+                  onLoadStart={handleVideoLoadStart}
+                  onCanPlay={handleVideoCanPlay}
                   onError={handleVideoError}
                   onPlay={handleVideoPlay}
                   onPause={handleVideoPause}
                   onEnded={handleVideoEnded}
                   onTimeUpdate={handleVideoTimeUpdate}
                   crossOrigin="anonymous"
+                  style={{ backgroundColor: "#000" }}
                 >
                   <source src={getVideoStreamUrl(currentQuestion)} type="video/mp4" />
                   <p className="text-white p-4">Browser Anda tidak mendukung pemutar video.</p>
@@ -982,72 +873,70 @@ export default function ExercisePracticePage() {
               </div>
 
               {/* Video Controls */}
-              <div className="flex items-center justify-between mt-4">
+              <div className="flex items-center justify-between mt-3">
                 <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" onClick={replayVideo}>
-                    <Replay className="h-4 w-4 mr-1" />
+                  <Button variant="outline" size="sm" onClick={replayVideo} disabled={!videoCanPlay}>
+                    <RefreshCw className="h-4 w-4 mr-1" />
                     Putar Ulang
                   </Button>
                   {isVideoPlaying ? (
-                    <Badge variant="secondary" className="text-blue-600">
+                    <Badge className="bg-blue-100 text-blue-800 text-xs">
                       <Play className="h-3 w-3 mr-1" />
                       Sedang Diputar
                     </Badge>
                   ) : (
-                    <Badge variant="outline">
+                    <Badge variant="outline" className="text-xs">
                       <Pause className="h-3 w-3 mr-1" />
                       Dijeda
                     </Badge>
                   )}
                 </div>
-                {!hasWatchedVideo && (
-                  <div className="text-xs text-muted-foreground">💡 Tonton video hingga selesai untuk melanjutkan</div>
-                )}
+                
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          </div>
 
-        {/* Question and Answers */}
-        <div className="order-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Soal {currentQuestion.order}</CardTitle>
-              <CardDescription>Pilih jawaban yang paling tepat berdasarkan video yang Anda tonton</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
+          {/* Question and Answers */}
+          <div className="order-2">
+            <div className="bg-white dark:bg-slate-800 rounded-lg p-3 sm:p-4 shadow-sm">
+              <h3 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white mb-2">
+                Soal {currentQuestion.order}
+              </h3>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Pilih jawaban yang paling tepat berdasarkan video yang Anda tonton
+              </p>
+
               {/* Question Text */}
-              <div className="p-4 bg-muted rounded-md">
-                <p className="text-lg font-medium">{currentQuestion.question}</p>
+              <div className="p-3 sm:p-4 bg-gray-50 dark:bg-slate-700 rounded-md mb-4">
+                <p className="text-sm sm:text-base font-medium text-gray-900 dark:text-white">
+                  {currentQuestion.question}
+                </p>
               </div>
 
               {!showFeedback ? (
                 <>
                   {/* Answer Options */}
-                  <RadioGroup value={selectedOption} onValueChange={setSelectedOption}>
-                    <div className="space-y-3">
-                      {currentQuestion.options
-                        .sort((a, b) => a.order - b.order)
-                        .map((option) => (
-                          <div
-                            key={option.id}
-                            className="flex items-center space-x-3 p-3 border rounded-md hover:bg-muted/50 transition-colors"
-                          >
-                            <RadioGroupItem value={option.id.toString()} id={`option-${option.id}`} />
-                            <Label htmlFor={`option-${option.id}`} className="flex-1 cursor-pointer">
-                              {option.option_text}
-                            </Label>
-                          </div>
-                        ))}
-                    </div>
+                  <RadioGroup value={selectedOption} onValueChange={setSelectedOption} className="space-y-3 mb-4">
+                    {currentQuestion.options
+                      .sort((a, b) => a.order - b.order)
+                      .map((option) => (
+                        <div
+                          key={option.id}
+                          className="flex items-center space-x-3 p-3 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
+                        >
+                          <RadioGroupItem value={option.id.toString()} id={`option-${option.id}`} />
+                          <Label htmlFor={`option-${option.id}`} className="flex-1 cursor-pointer text-sm sm:text-base">
+                            {option.option_text}
+                          </Label>
+                        </div>
+                      ))}
                   </RadioGroup>
 
                   {/* Submit Button */}
                   <Button
                     onClick={handleSubmitAnswer}
                     disabled={!selectedOption || isSubmitting}
-                    className="w-full"
-                    size="lg"
+                    className="w-full bg-[#3B82F6] hover:bg-[#2563EB] text-sm sm:text-base h-10 sm:h-12"
                   >
                     {isSubmitting ? (
                       <>
@@ -1055,14 +944,16 @@ export default function ExercisePracticePage() {
                         Mengirim...
                       </>
                     ) : (
-                      "Kirim Jawaban"
+                      <>
+                        Kirim Jawaban
+                      </>
                     )}
                   </Button>
 
                   {/* Hint for watching video */}
                   {!hasWatchedVideo && (
-                    <div className="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md">
-                      <p className="text-sm text-blue-600 dark:text-blue-400">
+                    <div className="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md mt-3">
+                      <p className="text-xs sm:text-sm text-blue-600 dark:text-blue-400">
                         💡 Disarankan untuk menonton video terlebih dahulu sebelum menjawab
                       </p>
                     </div>
@@ -1084,7 +975,7 @@ export default function ExercisePracticePage() {
                       ) : (
                         <XCircle className="h-6 w-6 text-red-600" />
                       )}
-                      <span className="font-semibold text-lg">
+                      <span className="font-semibold text-base sm:text-lg">
                         {feedback?.is_correct ? "Jawaban Benar!" : "Jawaban Kurang Tepat"}
                       </span>
                     </div>
@@ -1092,7 +983,7 @@ export default function ExercisePracticePage() {
                     <p className="text-sm mb-4 leading-relaxed">{feedback?.explanation}</p>
 
                     <div className="grid grid-cols-1 gap-3 text-sm">
-                      <div className="flex justify-between items-center p-2 bg-white/50 rounded">
+                      <div className="flex justify-between items-center p-2 bg-white/50 dark:bg-slate-800/50 rounded">
                         <span className="font-medium">Jawaban Anda:</span>
                         <span className={`font-medium ${feedback?.is_correct ? "text-green-600" : "text-red-600"}`}>
                           {feedback?.selected_option.text}
@@ -1100,13 +991,13 @@ export default function ExercisePracticePage() {
                       </div>
 
                       {!feedback?.is_correct && (
-                        <div className="flex justify-between items-center p-2 bg-white/50 rounded">
+                        <div className="flex justify-between items-center p-2 bg-white/50 dark:bg-slate-800/50 rounded">
                           <span className="font-medium">Jawaban Benar:</span>
                           <span className="text-green-600 font-medium">{feedback?.correct_option.text}</span>
                         </div>
                       )}
 
-                      <div className="flex justify-between items-center p-2 bg-white/50 rounded">
+                      <div className="flex justify-between items-center p-2 bg-white/50 dark:bg-slate-800/50 rounded">
                         <span className="font-medium">Poin Diperoleh:</span>
                         <span className="font-bold">
                           {feedback?.points_earned}/{feedback?.max_points}
@@ -1114,7 +1005,7 @@ export default function ExercisePracticePage() {
                       </div>
 
                       {feedback?.current_progress && (
-                        <div className="flex justify-between items-center p-2 bg-white/50 rounded">
+                        <div className="flex justify-between items-center p-2 bg-white/50 dark:bg-slate-800/50 rounded">
                           <span className="font-medium">Skor Saat Ini:</span>
                           <span className="font-bold">
                             {feedback.current_progress.current_score}/{feedback.current_progress.max_score}
@@ -1126,34 +1017,30 @@ export default function ExercisePracticePage() {
 
                   {/* Next Question or Final Results Button */}
                   {!feedback?.is_last_question ? (
-                    <Button onClick={handleNextQuestion} className="w-full" size="lg">
+                    <Button onClick={handleNextQuestion} className="w-full bg-[#3B82F6] hover:bg-[#2563EB] h-12">
                       Soal Berikutnya
                       <ArrowLeft className="ml-2 h-4 w-4 rotate-180" />
                     </Button>
                   ) : (
                     <div className="space-y-4">
-                      <div className="text-center p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+                      <div className="text-center p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
                         <Trophy className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-                        <p className="text-lg font-semibold text-blue-800 mb-1">Latihan Selesai!</p>
-                        <p className="text-sm text-blue-600">Anda telah menyelesaikan semua soal dalam latihan ini</p>
+                        <p className="text-lg font-semibold text-blue-800 dark:text-blue-400 mb-1">Latihan Selesai!</p>
+                        <p className="text-sm text-blue-600 dark:text-blue-500">
+                          Anda telah menyelesaikan semua soal dalam latihan ini
+                        </p>
                       </div>
 
-                      <Button onClick={handleShowFinalResults} className="w-full" size="lg">
+                      <Button onClick={handleShowFinalResults} className="w-full bg-[#3B82F6] hover:bg-[#2563EB] h-12">
                         <Trophy className="mr-2 h-4 w-4" />
                         Lihat Hasil Lengkap
                       </Button>
-
-                      <div className="text-center">
-                        <p className="text-sm text-muted-foreground">
-                          Klik tombol di atas untuk melihat hasil dan statistik lengkap
-                        </p>
-                      </div>
                     </div>
                   )}
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </div>
     </div>

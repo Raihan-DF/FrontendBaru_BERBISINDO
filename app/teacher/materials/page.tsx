@@ -163,20 +163,18 @@ export default function TeacherMaterials() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-slate-50 to-indigo-50">
-          <div className="container mx-auto p-4 md:p-6">
-            <div className="flex justify-center items-center h-64">
-              <div className="flex flex-col items-center gap-4">
-                <div className="relative">
-                  <div className="w-16 h-16 border-4 border-blue-200 rounded-full animate-spin border-t-blue-600"></div>
-                  <div className="absolute inset-0 w-16 h-16 border-4 border-transparent rounded-full animate-ping border-t-blue-400"></div>
-                </div>
-                <p className="text-blue-600 font-medium">
-                  Memuat data materi...
-                </p>
+        <div className="container mx-auto p-4 md:p-6">
+          <div className="flex justify-center items-center h-64">
+            <div className="flex flex-col items-center gap-4">
+              <div className="relative">
+                <div className="w-16 h-16 border-4 border-blue-200 rounded-full animate-spin border-t-blue-600"></div>
+                <div className="absolute inset-0 w-16 h-16 border-4 border-transparent rounded-full animate-ping border-t-blue-400"></div>
               </div>
+              <p className="text-blue-600 font-medium">Memuat data materi...</p>
             </div>
           </div>
         </div>
+      </div>
     );
   }
 
@@ -231,18 +229,18 @@ export default function TeacherMaterials() {
                     className="hover:shadow-lg transition-shadow"
                   >
                     <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div className="space-y-1">
+                      <div className="flex items-start justify-between gap-3">
+                        {/* Title section */}
+                        <div className="flex-1 min-w-0">
                           <Link href={`/teacher/materials/${material.id}`}>
-                            <CardTitle className="line-clamp-2">
+                            <CardTitle className="text-sm sm:text-base font-semibold break-words line-clamp-2 leading-snug text-ellipsis overflow-hidden">
                               {material.title}
                             </CardTitle>
                           </Link>
-                          <CardDescription className="line-clamp-2">
-                            {material.description}
-                          </CardDescription>
                         </div>
-                        <div className="flex flex-col gap-1">
+
+                        {/* Badge section */}
+                        <div className="flex flex-col gap-1 items-end flex-shrink-0">
                           <Badge
                             className={getDifficultyColor(
                               material.difficulty_level
@@ -258,6 +256,7 @@ export default function TeacherMaterials() {
                         </div>
                       </div>
                     </CardHeader>
+
                     <CardContent>
                       <div className="aspect-video rounded-md bg-muted mb-3 overflow-hidden">
                         <Link href={`/teacher/materials/${material.id}`}>

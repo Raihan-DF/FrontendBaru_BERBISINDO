@@ -1,6 +1,12 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, BookOpen, CheckCircle, GraduationCap, Users } from 'lucide-react';
+import {
+  ArrowRight,
+  BookOpen,
+  CheckCircle,
+  GraduationCap,
+  Users,
+} from "lucide-react";
 
 export default function Home() {
   return (
@@ -42,28 +48,41 @@ export default function Home() {
         </div>
       </header>
       <main className="flex-1">
-        <section className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-b from-background to-muted">
+        <section className="w-full py-12 md:py-24 lg:py-32 bg-[#D6F4F4]">
           <div className="container px-6 md:px-8 lg:px-6">
             <div className="grid gap-8 lg:grid-cols-2 lg:gap-12 items-center">
               <div className="flex flex-col justify-center space-y-6">
                 <div className="space-y-2">
-                  <h1 className="text-2xl font-bold tracking-tighter sm:text-4xl md:text-5xl xl:text-6xl/none">
+                  <h1 className="text-2xl font-bold tracking-tighter sm:text-4xl md:text-5xl xl:text-6xl/none text-[#073A4B]">
                     Belajar Bahasa Isyarat Indonesia dengan Mudah
                   </h1>
-                  <p className="max-w-[600px] text-muted-foreground md:text-xl">
+                  <p className="max-w-[600px] text-slate-700 md:text-xl">
                     Platform pembelajaran interaktif untuk memahami dan
                     menguasai bahasa isyarat Indonesia dengan metode yang
                     terstruktur.
                   </p>
                 </div>
-                <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                  <Link href="/register">
-                    <Button size="lg" className="gap-1 bg-gradient-to-r from-blue-300 to-blue-500 text-white hover:from-blue-600 hover:to-blue-900 text-white">
+                <div className="flex flex-wrap gap-2 justify-center items-center min-[375px]:flex-row">
+                  <Link
+                    href="/register"
+                    className="flex-1 min-w-[140px] max-w-[200px]"
+                  >
+                    <Button
+                      size="lg"
+                      className="w-full gap-1 bg-[#108AB1] text-white hover:bg-[#0c7a9a] whitespace-normal"
+                    >
                       Mulai Belajar <ArrowRight className="h-4 w-4" />
                     </Button>
                   </Link>
-                  <Link href="#fitur">
-                    <Button size="lg" variant="outline">
+                  <Link
+                    href="#fitur"
+                    className="flex-1 min-w-[140px] max-w-[200px]"
+                  >
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      className="w-full text-[#108AB1] border-[#108AB1] hover:bg-[#108AB1]/10 whitespace-normal"
+                    >
                       Pelajari Lebih Lanjut
                     </Button>
                   </Link>

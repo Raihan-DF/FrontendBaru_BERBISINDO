@@ -361,17 +361,16 @@ export default function StudentMaterialDetail({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 flex-wrap sm:flex-nowrap">
         <Link href="/student/materials">
           <Button variant="outline" size="icon">
             <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>
-        <div className="flex-1">
-          <h1 className="text-3xl font-bold tracking-tight">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight line-clamp-2 break-words">
             {material.title}
           </h1>
-          <p className="text-muted-foreground">{material.description}</p>
         </div>
       </div>
 
@@ -419,6 +418,10 @@ export default function StudentMaterialDetail({
                       <span className="font-medium">Dibuat oleh:</span>{" "}
                       {material.creator.name}
                     </p>
+                    <p className="text-muted-foreground text-sm sm:text-base line-clamp-2 break-words">
+                      <span className="font-medium">Deskripsi:</span>{" "}
+                      {material.description}
+                    </p>
                   </div>
                 </div>
 
@@ -435,53 +438,6 @@ export default function StudentMaterialDetail({
                     {progress}% selesai
                   </p>
                 </div>
-              </CardContent>
-            </Card>
-
-            {/* Videos List */}
-            <Card className="mt-6">
-              <CardHeader>
-                <CardTitle>Daftar Video ({material.videos.length})</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {material.videos.length === 0 ? (
-                  <div className="text-center py-4">
-                    <p className="text-sm text-muted-foreground">
-                      Materi ini belum memiliki video pembelajaran
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {material.videos
-                      .sort((a, b) => a.order - b.order)
-                      .map((video, index) => (
-                        <div
-                          key={video.id}
-                          className={`flex items-center gap-3 p-3 border rounded-lg transition-colors cursor-pointer ${
-                            selectedVideo?.id === video.id
-                              ? "bg-primary/10 border-primary/30"
-                              : video.is_completed
-                              ? "bg-green-50 border-green-200"
-                              : "hover:bg-muted/50"
-                          }`}
-                          onClick={() => handleVideoClick(video)}
-                        >
-                          <div className="flex-shrink-0 w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-medium">
-                            {index + 1}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-medium truncate text-sm flex items-center gap-2">
-                              {video.title}
-                              {video.is_completed && (
-                                <CheckCircle className="h-3 w-3 text-green-600" />
-                              )}
-                            </h4>
-                          </div>
-                          <Play className="h-4 w-4 flex-shrink-0" />
-                        </div>
-                      ))}
-                  </div>
-                )}
               </CardContent>
             </Card>
           </div>
@@ -630,6 +586,52 @@ export default function StudentMaterialDetail({
               </CardContent>
             </Card>
           </div>
+          {/* Videos List */}
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle>Daftar Video ({material.videos.length})</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {material.videos.length === 0 ? (
+                <div className="text-center py-4">
+                  <p className="text-sm text-muted-foreground">
+                    Materi ini belum memiliki video pembelajaran
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {material.videos
+                    .sort((a, b) => a.order - b.order)
+                    .map((video, index) => (
+                      <div
+                        key={video.id}
+                        className={`flex items-center gap-3 p-3 border rounded-lg transition-colors cursor-pointer ${
+                          selectedVideo?.id === video.id
+                            ? "bg-primary/10 border-primary/30"
+                            : video.is_completed
+                            ? "bg-green-50 border-green-200"
+                            : "hover:bg-muted/50"
+                        }`}
+                        onClick={() => handleVideoClick(video)}
+                      >
+                        <div className="flex-shrink-0 w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-medium">
+                          {index + 1}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium truncate text-sm flex items-center gap-2">
+                            {video.title}
+                            {video.is_completed && (
+                              <CheckCircle className="h-3 w-3 text-green-600" />
+                            )}
+                          </h4>
+                        </div>
+                        <Play className="h-4 w-4 flex-shrink-0" />
+                      </div>
+                    ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       ) : (
         <Alert>

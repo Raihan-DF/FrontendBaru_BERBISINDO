@@ -26,7 +26,6 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useApi } from "@/hooks/use-api";
-import { useAuth } from "@/context/AuthContext";
 
 interface Material {
   id: number;
@@ -228,25 +227,71 @@ export default function StudentDashboard() {
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
-        <div className="container mx-auto py-8 space-y-8 px-4 sm:px-6 lg:px-8">
+        <div className="container mx-auto py-6 space-y-6 px-4 sm:px-6 lg:px-8">
           {/* Header Section */}
           <div className="text-center space-y-4">
-            <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-slate-600 to-blue-600 bg-clip-text text-transparent">
-              Dashboard Pembelajaran
-            </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            <div className="flex justify-center">
+              <div className="bg-[#108AB1] p-4 rounded-full shadow-md">
+                <GraduationCap className="h-8 w-8 text-white" />
+              </div>
+            </div>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Selamat datang kembali! Mari lanjutkan perjalanan belajar bahasa
               isyarat Anda
             </p>
           </div>
 
+          {/* Call to Action Section */}
+          <Card className="max-w-4xl mx-auto shadow-lg border-0 bg-[#D6F4F4] text-slate-800">
+            <CardContent className="p-6 text-center">
+              <div className="space-y-4">
+                <h2 className="text-2xl font-bold">
+                  Siap Memulai Perjalanan Belajar?
+                </h2>
+                <p className="text-lg text-slate-700 max-w-2xl mx-auto">
+                  Bahasa isyarat adalah jembatan komunikasi. Setiap gerakan
+                  tangan memiliki makna, setiap ekspresi wajah menyampaikan
+                  perasaan. Mari mulai belajar dan buka dunia komunikasi baru!
+                </p>
+                <div className="flex flex-wrap gap-2 justify-center items-center">
+                  <Link
+                    href="/student/materials"
+                    className="flex-1 min-w-[160px] max-w-[200px]"
+                  >
+                    <Button
+                      size="lg"
+                      className="w-full bg-[#108AB1] text-white hover:bg-[#0c7a9a] font-semibold whitespace-normal"
+                    >
+                      <BookOpen className="mr-2 h-5 w-5" />
+                      Mulai Belajar
+                    </Button>
+                  </Link>
+                  <Link
+                    href="/student/exercises"
+                    className="flex-1 min-w-[140px] max-w-[200px]"
+                  >
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      className="w-full border-[#108AB1] text-[#108AB1] hover:bg-[#108AB1]/10 whitespace-normal"
+                    >
+                      <FileText className="mr-2 h-5 w-5" />
+                      Coba Latihan
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Learning Progress Summary */}
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 max-w-6xl mx-auto">
-            <Card className="shadow-lg border-0 bg-gradient-to-br from-blue-500 to-cyan-600 text-white border-l-4 border-l-blue-600">
-              <CardContent className="p-6">
+          <div className="grid gap-4 grid-cols-2 max-w-6xl mx-auto">
+            {/* Card 1: Materi Dipelajari */}
+            <Card className="shadow-lg border-0 bg-gradient-to-br from-[#06D7A0] to-[#108AB1] text-white border-l-4 border-l-[#073A4B]">
+              <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-blue-100 text-sm font-medium">
+                    <p className="text-white text-sm font-medium">
                       Materi Dipelajari
                     </p>
                     <p className="text-3xl font-bold">
@@ -257,10 +302,6 @@ export default function StudentDashboard() {
                       value={dashboardData.materials.percentage || 0}
                       className="mt-2 bg-white/20"
                     />
-                    <p className="mt-2 text-xs text-blue-100">
-                      {(dashboardData.materials.percentage || 0).toFixed(0)}%
-                      selesai
-                    </p>
                   </div>
                   <div className="bg-white/20 p-3 rounded-full">
                     <BookOpen className="h-6 w-6" />
@@ -269,11 +310,12 @@ export default function StudentDashboard() {
               </CardContent>
             </Card>
 
-            <Card className="shadow-lg border-0 bg-gradient-to-br from-green-500 to-emerald-600 text-white border-l-4 border-l-green-600">
-              <CardContent className="p-6">
+            {/* Card 2: Latihan Selesai */}
+            <Card className="shadow-lg border-0 bg-gradient-to-br from-[#108AB1] to-[#073A4B] text-white border-l-4 border-l-[#06D7A0]">
+              <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-green-100 text-sm font-medium">
+                    <p className="text-white text-sm font-medium">
                       Latihan Selesai
                     </p>
                     <p className="text-3xl font-bold">
@@ -284,9 +326,6 @@ export default function StudentDashboard() {
                       value={dashboardData.exercises.percentage}
                       className="mt-2 bg-white/20"
                     />
-                    <p className="mt-2 text-xs text-green-100">
-                      {dashboardData.exercises.percentage.toFixed(0)}% selesai
-                    </p>
                   </div>
                   <div className="bg-white/20 p-3 rounded-full">
                     <FileText className="h-6 w-6" />
@@ -295,11 +334,12 @@ export default function StudentDashboard() {
               </CardContent>
             </Card>
 
-            <Card className="shadow-lg border-0 bg-gradient-to-br from-purple-500 to-pink-600 text-white border-l-4 border-l-purple-600">
-              <CardContent className="p-6">
+            {/* Card 3: Quiz Selesai */}
+            <Card className="shadow-lg border-0 bg-gradient-to-br from-[#f472b6] to-[#8B5CF6] text-white border-l-4 border-l-[#F7866A]">
+              <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-purple-100 text-sm font-medium">
+                    <p className="text-white text-sm font-medium">
                       Quiz Selesai
                     </p>
                     <p className="text-3xl font-bold">
@@ -310,9 +350,6 @@ export default function StudentDashboard() {
                       value={dashboardData.quizzes.percentage}
                       className="mt-2 bg-white/20"
                     />
-                    <p className="mt-2 text-xs text-purple-100">
-                      {dashboardData.quizzes.percentage.toFixed(0)}% selesai
-                    </p>
                   </div>
                   <div className="bg-white/20 p-3 rounded-full">
                     <GraduationCap className="h-6 w-6" />
@@ -321,11 +358,12 @@ export default function StudentDashboard() {
               </CardContent>
             </Card>
 
-            <Card className="shadow-lg border-0 bg-gradient-to-br from-amber-500 to-orange-600 text-white border-l-4 border-l-amber-600">
-              <CardContent className="p-6">
+            {/* Card 4: Nilai Rata-rata */}
+            <Card className="shadow-lg border-0 bg-gradient-to-br from-[#FFD167] to-[#F7866A] text-slate-800 border-l-4 border-l-[#f472b6]">
+              <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-amber-100 text-sm font-medium">
+                    <p className="text-slate-700 text-sm font-medium">
                       Nilai Rata-rata
                     </p>
                     <p className="text-3xl font-bold">
@@ -333,9 +371,9 @@ export default function StudentDashboard() {
                     </p>
                     <Progress
                       value={dashboardData.quizzes.average_score}
-                      className="mt-2 bg-white/20"
+                      className="mt-2 bg-black/10"
                     />
-                    <p className="mt-2 text-xs text-amber-100">
+                    <p className="mt-2 text-xs text-slate-700">
                       {dashboardData.quizzes.average_score >= 80
                         ? "Sangat baik"
                         : dashboardData.quizzes.average_score >= 60
@@ -343,7 +381,7 @@ export default function StudentDashboard() {
                         : "Perlu ditingkatkan"}
                     </p>
                   </div>
-                  <div className="bg-white/20 p-3 rounded-full">
+                  <div className="bg-black/10 p-3 rounded-full">
                     <Trophy className="h-6 w-6" />
                   </div>
                 </div>
@@ -358,10 +396,14 @@ export default function StudentDashboard() {
                 <TrendingUp className="h-5 w-5" />
                 Perjalanan Belajar Anda
               </CardTitle>
+              <CardDescription className="text-base">
+                "Mulailah dari materi dasar, lanjutkan dengan latihan, dan
+                buktikan kemampuan Anda melalui quiz!"
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="relative">
-                <div className="absolute left-4 top-0 h-full w-0.5 bg-muted"></div>
+                {/* <div className="absolute left-4 top-0 h-full w-0.5 bg-muted"></div> */}
                 <div className="space-y-8">
                   {/* Materials Progress */}
                   {dashboardData.materials?.items &&
@@ -497,12 +539,21 @@ export default function StudentDashboard() {
                       <div className="text-center py-8">
                         <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                         <h3 className="text-lg font-medium text-gray-900 mb-2">
-                          Belum Ada Konten
+                          Materi Segera Hadir!
                         </h3>
-                        <p className="text-muted-foreground">
-                          Materi pembelajaran akan muncul di sini setelah
-                          tersedia
-                        </p>
+                        {/* <p className="text-muted-foreground mb-4">
+                          Kami sedang menyiapkan materi pembelajaran bahasa
+                          isyarat yang menarik untuk Anda. Pantau terus
+                          dashboard ini untuk update terbaru!
+                        </p> */}
+                        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                          <p className="text-blue-800 text-sm font-medium">
+                            💡 Tips: Sementara menunggu, Anda bisa mempelajari
+                            dasar-dasar bahasa isyarat melalui video online atau
+                            bergabung dengan komunitas bahasa isyarat di sekitar
+                            Anda.
+                          </p>
+                        </div>
                       </div>
                     )}
                 </div>
@@ -534,18 +585,18 @@ export default function StudentDashboard() {
               </TabsList>
 
               <TabsContent value="recent" className="space-y-4">
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-4 grid-cols-1">
                   {dashboardData.recent_progress &&
                   dashboardData.recent_progress.length > 0 ? (
                     dashboardData.recent_progress
-                      .slice(0, 6)
+                      .slice(0, 4)
                       .map((activity) => (
                         <Card
                           key={activity.id}
                           className="shadow-lg border-0 bg-white/90 backdrop-blur-sm hover:shadow-xl transition-all duration-300 border-l-4 border-l-green-500 bg-green-50/30"
                         >
                           <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
+                            <CardTitle className="flex items-start gap-2 text-sm sm:text-base font-semibold text-gray-900 line-clamp-2 break-words">
                               {activity.progress_type === "quiz" && (
                                 <Award className="h-4 w-4" />
                               )}
@@ -563,31 +614,6 @@ export default function StudentDashboard() {
                               Diselesaikan {formatDate(activity.completed_at)}
                             </CardDescription>
                           </CardHeader>
-                          <CardContent>
-                            {activity.score && (
-                              <>
-                                <div className="flex items-center justify-between">
-                                  <span className="text-sm font-medium">
-                                    Nilai:
-                                  </span>
-                                  <span
-                                    className={`text-sm font-bold ${getScoreColor(
-                                      activity.score
-                                    )}`}
-                                  >
-                                    {activity.score}%
-                                  </span>
-                                </div>
-                                <Progress
-                                  value={activity.score}
-                                  className="mt-2"
-                                />
-                              </>
-                            )}
-                            <p className="mt-2 text-sm text-muted-foreground capitalize">
-                              {activity.progress_type} selesai
-                            </p>
-                          </CardContent>
                           <CardFooter>
                             <Link
                               href={
@@ -623,7 +649,7 @@ export default function StudentDashboard() {
               </TabsContent>
 
               <TabsContent value="recommended" className="space-y-4">
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-4 grid-cols-2">
                   {/* Recommended Materials */}
                   {dashboardData.materials?.items &&
                     dashboardData.materials.items.length > 0 &&

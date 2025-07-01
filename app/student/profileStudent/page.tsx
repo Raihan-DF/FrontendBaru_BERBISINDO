@@ -236,26 +236,6 @@ export default function StudentProfile() {
                     Kelola informasi pribadi Anda di sini.
                   </CardDescription>
                 </div>
-                {!isEditing ? (
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={() => setIsEditing(true)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
-                  >
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edit Profil
-                  </Button>
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsEditing(false)}
-                    className="text-gray-600 border-gray-300"
-                  >
-                    Batal
-                  </Button>
-                )}
               </CardHeader>
 
               <CardContent className="px-6 pb-6">
@@ -277,7 +257,6 @@ export default function StudentProfile() {
                         {formData.name?.charAt(0)}
                       </AvatarFallback>
                     </Avatar>
-
                     {isEditing && (
                       <div className="flex flex-col items-center gap-1 text-sm">
                         <input
@@ -306,6 +285,26 @@ export default function StudentProfile() {
                           Max 2MB. Format: JPG, PNG.
                         </p>
                       </div>
+                    )}
+                    {!isEditing ? (
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => setIsEditing(true)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit Profil
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsEditing(false)}
+                        className="text-gray-600 border-gray-300"
+                      >
+                        Batal
+                      </Button>
                     )}
                   </div>
 

@@ -221,26 +221,6 @@ export default function TeacherProfile() {
                     Kelola informasi pribadi Anda di sini.
                   </CardDescription>
                 </div>
-                {!isEditing ? (
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={() => setIsEditing(true)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
-                  >
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edit Profil
-                  </Button>
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsEditing(false)}
-                    className="text-gray-600 border-gray-300"
-                  >
-                    Batal
-                  </Button>
-                )}
               </CardHeader>
 
               <CardContent className="px-6 pb-6">
@@ -291,6 +271,26 @@ export default function TeacherProfile() {
                           Max 2MB. Format: JPG, PNG.
                         </p>
                       </div>
+                    )}
+                    {!isEditing ? (
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => setIsEditing(true)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit Profil
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsEditing(false)}
+                        className="text-gray-600 border-gray-300"
+                      >
+                        Batal
+                      </Button>
                     )}
                   </div>
 

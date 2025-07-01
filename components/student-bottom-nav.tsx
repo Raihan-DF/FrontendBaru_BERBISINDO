@@ -39,7 +39,7 @@ export function StudentBottomNav() {
     },
     {
       title: "Pencapaian",
-      href: "/student/achievements",
+      href: "/student/progress",
       icon: Trophy,
     },
     {

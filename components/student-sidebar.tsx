@@ -39,7 +39,7 @@ export function StudentSidebar() {
     },
     {
       title: "Pencapaian",
-      href: "/student/achievements",
+      href: "/student/progress",
       icon: Trophy,
     },
     {

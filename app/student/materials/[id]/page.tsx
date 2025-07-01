@@ -197,6 +197,7 @@ export default function StudentMaterialDetail({
         toast({
           title: "Video selesai!",
           description: "Video telah ditandai sebagai selesai.",
+          duration:500,
         });
       } else {
         toast({
@@ -510,10 +511,10 @@ export default function StudentMaterialDetail({
                     onCanPlay={() => {
                       console.log("✅ Video can play:", selectedVideo.title);
                       setVideoLoading(false);
-                      toast({
-                        title: "Video Ready! ✅",
-                        description: `${selectedVideo.title} berhasil dimuat dan siap diputar`,
-                      });
+                      // toast({
+                      //   title: "Video Ready! ✅",
+                      //   description: `${selectedVideo.title} berhasil dimuat dan siap diputar`,
+                      // });
                     }}
                     onError={(e) => {
                       console.error(
@@ -523,11 +524,11 @@ export default function StudentMaterialDetail({
                       );
                       setVideoError("Video gagal dimuat");
                       setVideoLoading(false);
-                      toast({
-                        title: "Video Error ❌",
-                        description: `${selectedVideo.title} gagal dimuat. Coba refresh halaman atau test URLs.`,
-                        variant: "destructive",
-                      });
+                      // toast({
+                      //   title: "Video Error ❌",
+                      //   description: `${selectedVideo.title} gagal dimuat. Coba refresh halaman atau test URLs.`,
+                      //   variant: "destructive",
+                      // });
                     }}
                     // Remove the onEnded event handler completely
                     crossOrigin="anonymous"

@@ -392,6 +392,7 @@ export default function ExercisePracticePage() {
         title: "Tonton Video Terlebih Dahulu",
         description: "Disarankan untuk menonton video sebelum menjawab soal.",
         variant: "default",
+        duration:1000,
       })
     }
 
@@ -749,7 +750,7 @@ export default function ExercisePracticePage() {
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
       <div className="container mx-auto py-4 px-3 sm:py-6 sm:px-4 space-y-4 sm:space-y-6 max-w-6xl">
         {/* Header */}
-        <div className="flex items-center gap-3 sm:gap-4">
+        <div className="flex items-center gap-3 sm:gap-4 mb-3">
           <Link href="/student/exercises">
             <Button variant="outline" size="icon" className="h-8 w-8 sm:h-10 sm:w-10">
               <ArrowLeft className="h-4 w-4" />
@@ -759,9 +760,6 @@ export default function ExercisePracticePage() {
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white line-clamp-2">
               {exercise.title}
             </h1>
-            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-              Tonton video dan jawab pertanyaan yang diberikan
-            </p>
           </div>
           <div className="flex items-center gap-2">
             <Badge className={`${getDifficultyColor(exercise.difficulty_level)} text-xs`}>
@@ -809,9 +807,6 @@ export default function ExercisePracticePage() {
           <div className="order-1">
             <div className="bg-white dark:bg-slate-800 rounded-lg p-3 sm:p-4 shadow-sm">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white">
-                  Video: {currentQuestion.material_video.title}
-                </h3>
                 {hasWatchedVideo && (
                   <Badge className="bg-green-100 text-green-800 text-xs">
                     <CheckCircle className="h-3 w-3 mr-1" />
@@ -819,9 +814,6 @@ export default function ExercisePracticePage() {
                   </Badge>
                 )}
               </div>
-              {/* <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-3">
-                Tonton video ini untuk menjawab soal {currentQuestion.order}
-              </p> */}
               {!hasWatchedVideo && (
                   <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">💡 Tonton video hingga selesai</div>
                 )}
@@ -891,7 +883,6 @@ export default function ExercisePracticePage() {
                     </Badge>
                   )}
                 </div>
-                
               </div>
             </div>
           </div>
@@ -902,9 +893,6 @@ export default function ExercisePracticePage() {
               <h3 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white mb-2">
                 Soal {currentQuestion.order}
               </h3>
-              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-4">
-                Pilih jawaban yang paling tepat berdasarkan video yang Anda tonton
-              </p>
 
               {/* Question Text */}
               <div className="p-3 sm:p-4 bg-gray-50 dark:bg-slate-700 rounded-md mb-4">

@@ -1,31 +1,31 @@
 "use client";
 
+import { useAuth } from "@/context/AuthContext";
+import { useApi } from "@/hooks/use-api";
 import { useState, useEffect } from "react";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 import {
   BookOpen,
-  FileText,
-  GraduationCap,
+  Brain,
   Trophy,
   TrendingUp,
+  AlertCircle,
+  User,
+  ChevronRight,
+  Play,
+  FileText,
   Award,
   Loader2,
-  AlertCircle,
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import ProtectedRoute from "@/components/ProtectedRoute";
-import { useApi } from "@/hooks/use-api";
+import Link from "next/link";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface Material {
   id: number;
@@ -42,61 +42,108 @@ interface Material {
   };
 }
 
-interface DashboardData {
+interface Exercise {
+  id: number;
+  title: string;
+  description: string;
+  total_questions: number;
+  completed_questions?: number;
+  progress_percentage?: number;
+}
+
+interface Quiz {
+  id: number;
+  title: string;
+  description: string;
+  material_id?: number;
+  time_limit: number;
+  total_questions: number;
+  total_points: number;
+  difficulty_level: number;
+  is_published: boolean | number | string;
+  created_at: string;
+  updated_at: string;
+  creator_id: number;
+  creator?: {
+    id: number;
+    name: string;
+  };
+  material?: {
+    id: number;
+    title: string;
+  };
+  is_completed?: boolean;
+  score?: number;
+  attempt_count?: number;
+  max_attempts?: number;
+  best_score?: number;
+  last_attempt_at?: string;
+}
+
+interface StudentProgress {
+  id: number;
+  progress_type: string;
+  completed_at: string;
+  material?: { id: number; title: string };
+  exercise?: { id: number; title: string };
+  quiz?: { id: number; title: string };
+  score?: number;
+  is_completed?: boolean;
+}
+
+interface Teacher {
+  id: number;
+  name: string;
+  email: string;
+  avatar?: string;
+  materials_count?: number;
+  exercises_count?: number;
+  quizzes_count?: number;
+}
+
+interface RecentActivity {
+  id: number;
+  type: string;
+  title: string;
+  score?: number;
+  completed_at: string;
+  thumbnail?: string;
+}
+
+interface DashboardStats {
   materials: {
     total: number;
     completed: number;
+    in_progress: number;
     percentage: number;
     items: Material[];
   };
   exercises: {
     total: number;
     completed: number;
+    average_score: number;
     percentage: number;
-    items: Array<{
-      id: number;
-      title: string;
-      description: string;
-      total_questions: number;
-      completed_questions: number;
-      progress_percentage: number;
-    }>;
+    items: Exercise[];
   };
   quizzes: {
     total: number;
     completed: number;
-    percentage: number;
     average_score: number;
-    items: Array<{
-      id: number;
-      title: string;
-      description: string;
-      total_questions: number;
-      best_score: number | null;
-      attempts_count: number;
-      passed: boolean;
-    }>;
+    percentage: number;
+    items: Quiz[];
   };
-  recent_progress: Array<{
-    id: number;
-    progress_type: string;
-    completed_at: string;
-    material?: { id: number; title: string };
-    exercise?: { id: number; title: string };
-    quiz?: { id: number; title: string };
-    score?: number;
-  }>;
+  teachers: Teacher[];
+  recent_activities: RecentActivity[];
 }
 
 export default function StudentDashboard() {
+  const { user } = useAuth();
+  const { buildUrl } = useApi();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState("recent");
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(
-    null
-  );
+  const router = useRouter();
+  const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { buildUrl } = useApi();
 
   useEffect(() => {
     fetchDashboardData();
@@ -106,41 +153,463 @@ export default function StudentDashboard() {
     try {
       setLoading(true);
       setError(null);
-      const token = localStorage.getItem("token");
 
+      const token = localStorage.getItem("token");
       if (!token) {
-        setError("Token tidak ditemukan. Silakan login kembali.");
+        toast({
+          title: "Error",
+          description: "Token tidak ditemukan. Silakan login kembali.",
+          variant: "destructive",
+        });
+        router.push("/login");
         return;
       }
 
-      const response = await fetch(buildUrl(`/api/student/progress`), {
-        method: "GET",
+      // Fetch materials
+      const materialsResponse = await fetch(buildUrl("/api/materials"), {
         headers: {
           Authorization: `Bearer ${token}`,
-          Accept: "application/json", // ✅ Wajib untuk response JSON
+          Accept: "application/json",
         },
       });
 
-      if (response.status === 401) {
+      if (materialsResponse.status === 401) {
+        toast({
+          title: "Session Expired",
+          description: "Sesi Anda telah berakhir. Silakan login kembali.",
+          variant: "destructive",
+        });
         localStorage.removeItem("token");
-        setError("Sesi Anda telah berakhir. Silakan login kembali.");
+        router.push("/login");
         return;
       }
 
-      if (response.ok) {
-        const data = await response.json();
-        console.log("Dashboard data:", data);
-        setDashboardData(data);
-      } else {
-        const errorData = await response.json();
-        setError(errorData.message || "Gagal memuat data dashboard");
+      let materials: Material[] = [];
+      if (materialsResponse.ok) {
+        const materialsData = await materialsResponse.json();
+        const materialsArray = materialsData.data || [];
+
+        // Fetch video count for each material
+        materials = await Promise.all(
+          materialsArray.map(async (material: Material) => {
+            try {
+              const videoResponse = await fetch(
+                buildUrl(`/api/materials/${material.id}/videos`),
+                {
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                    Accept: "application/json",
+                  },
+                }
+              );
+
+              if (videoResponse.ok) {
+                const videoData = await videoResponse.json();
+                return {
+                  ...material,
+                  videos_count: videoData.data ? videoData.data.length : 0,
+                };
+              }
+
+              return { ...material, videos_count: 0 };
+            } catch (error) {
+              console.error(
+                `Error fetching videos for material ${material.id}:`,
+                error
+              );
+              return { ...material, videos_count: 0 };
+            }
+          })
+        );
       }
+
+      // Fetch exercises
+      let exercises: Exercise[] = [];
+      try {
+        const exercisesResponse = await fetch(buildUrl("/api/exercises"), {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        });
+
+        if (exercisesResponse.ok) {
+          const exercisesData = await exercisesResponse.json();
+          exercises = exercisesData.data || [];
+        }
+      } catch (error) {
+        console.error("Error fetching exercises:", error);
+      }
+
+      // Fetch quizzes - Using the same pattern as your example
+      let quizzes: Quiz[] = [];
+      try {
+        const quizzesResponse = await fetch(buildUrl("/api/quizzes"), {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        });
+
+        if (quizzesResponse.ok) {
+          const data = await quizzesResponse.json();
+          console.log("Data quiz dari API:", data);
+
+          // Handle different response formats like in your example
+          if (data && !Array.isArray(data)) {
+            if (data.data && Array.isArray(data.data)) {
+              quizzes = data.data;
+            } else if (data.quizzes && Array.isArray(data.quizzes)) {
+              quizzes = data.quizzes;
+            } else if (typeof data === "object") {
+              quizzes = Object.values(data);
+            } else {
+              console.error("Format data quiz tidak dikenali:", data);
+              quizzes = [];
+            }
+          } else {
+            quizzes = data || [];
+          }
+
+          // Filter only published quizzes
+          quizzes = quizzes.filter((quiz: Quiz) => {
+            return (
+              quiz.is_published === true ||
+              quiz.is_published === 1 ||
+              quiz.is_published === "1"
+            );
+          });
+          console.log("Total quiz published:", quizzes.length);
+        } else {
+          console.error("Failed to fetch quizzes:", quizzesResponse.status);
+        }
+      } catch (error) {
+        console.error("Error fetching quizzes:", error);
+      }
+
+      // Fetch student progress - Updated to get more comprehensive data
+      let studentProgress: StudentProgress[] = [];
+      let progressOverview: any = null;
+      try {
+        // Try to get progress overview first
+        const progressOverviewResponse = await fetch(
+          buildUrl("/api/student/progress"),
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: "application/json",
+            },
+          }
+        );
+
+        if (progressOverviewResponse.ok) {
+          const progressData = await progressOverviewResponse.json();
+          progressOverview = progressData;
+          studentProgress = progressData.recent_progress || [];
+          console.log("Progress overview:", progressOverview);
+        }
+
+        // If that doesn't work, try the alternative endpoint
+        if (!progressOverview) {
+          const myProgressResponse = await fetch(
+            buildUrl("/api/student/my-progress"),
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                Accept: "application/json",
+              },
+            }
+          );
+
+          if (myProgressResponse.ok) {
+            const myProgressData = await myProgressResponse.json();
+            progressOverview = myProgressData;
+            studentProgress = myProgressData.recent_progress || [];
+            console.log("My progress data:", progressOverview);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching student progress:", error);
+      }
+
+      // Calculate materials statistics
+      let completedMaterials = 0;
+      let materialsPercentage = 0;
+
+      if (
+        progressOverview &&
+        progressOverview.overview &&
+        progressOverview.overview.materials
+      ) {
+        completedMaterials = progressOverview.overview.materials.completed || 0;
+        materialsPercentage =
+          progressOverview.overview.materials.percentage || 0;
+      } else {
+        // Fallback calculation
+        completedMaterials = studentProgress.filter(
+          (p) => p.progress_type === "material" && p.is_completed === true
+        ).length;
+        materialsPercentage =
+          materials.length > 0
+            ? Math.round((completedMaterials / materials.length) * 100)
+            : 0;
+      }
+
+      // Calculate exercises statistics
+      let completedExercises = 0;
+      let exercisesPercentage = 0;
+      let exerciseAverageScore = 0;
+
+      if (
+        progressOverview &&
+        progressOverview.overview &&
+        progressOverview.overview.exercises
+      ) {
+        completedExercises = progressOverview.overview.exercises.completed || 0;
+        exercisesPercentage =
+          progressOverview.overview.exercises.percentage || 0;
+        // Calculate average score from progress data if available
+        const exerciseScores = studentProgress
+          .filter(
+            (p) =>
+              p.progress_type === "exercise" &&
+              p.score !== undefined &&
+              p.score !== null
+          )
+          .map((p) => p.score!);
+        exerciseAverageScore =
+          exerciseScores.length > 0
+            ? Math.round(
+                exerciseScores.reduce((sum, score) => sum + score, 0) /
+                  exerciseScores.length
+              )
+            : 0;
+      } else {
+        // Fallback calculation
+        completedExercises = studentProgress.filter(
+          (p) => p.progress_type === "exercise" && p.is_completed === true
+        ).length;
+        exercisesPercentage =
+          exercises.length > 0
+            ? Math.round((completedExercises / exercises.length) * 100)
+            : 0;
+
+        const exerciseScores = studentProgress
+          .filter(
+            (p) =>
+              p.progress_type === "exercise" &&
+              p.score !== undefined &&
+              p.score !== null
+          )
+          .map((p) => p.score!);
+        exerciseAverageScore =
+          exerciseScores.length > 0
+            ? Math.round(
+                exerciseScores.reduce((sum, score) => sum + score, 0) /
+                  exerciseScores.length
+              )
+            : 0;
+      }
+
+      // Calculate quizzes statistics - Fixed logic with proper quiz count
+      let completedQuizzes = 0;
+      let quizzesPercentage = 0;
+      let quizAverageScore = 0;
+
+      if (
+        progressOverview &&
+        progressOverview.overview &&
+        progressOverview.overview.quizzes
+      ) {
+        completedQuizzes = progressOverview.overview.quizzes.completed || 0;
+        quizAverageScore = progressOverview.overview.quizzes.average_score || 0;
+      } else {
+        // Fallback calculation - count unique completed quizzes
+        const completedQuizIds = new Set();
+        studentProgress
+          .filter(
+            (p) =>
+              p.progress_type === "quiz" &&
+              p.is_completed === true &&
+              p.quiz?.id
+          )
+          .forEach((p) => completedQuizIds.add(p.quiz!.id));
+
+        completedQuizzes = completedQuizIds.size;
+
+        // Calculate quiz average score
+        const quizScores = studentProgress
+          .filter(
+            (p) =>
+              p.progress_type === "quiz" &&
+              p.score !== undefined &&
+              p.score !== null
+          )
+          .map((p) => p.score!);
+        quizAverageScore =
+          quizScores.length > 0
+            ? Math.round(
+                quizScores.reduce((sum, score) => sum + score, 0) /
+                  quizScores.length
+              )
+            : 0;
+      }
+
+      // Calculate quiz percentage based on actual quiz count
+      quizzesPercentage =
+        quizzes.length > 0
+          ? Math.round((completedQuizzes / quizzes.length) * 100)
+          : 0;
+
+      console.log("Quiz statistics:", {
+        totalQuizzes: quizzes.length,
+        completedQuizzes,
+        quizzesPercentage,
+        quizAverageScore,
+      });
+
+      // Fetch teachers (users with teacher role)
+      let teachers: Teacher[] = [];
+      try {
+        const teachersResponse = await fetch(buildUrl("/api/user"), {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        });
+
+        if (teachersResponse.ok) {
+          const userData = await teachersResponse.json();
+          // For now, we'll create mock teachers data since we need to implement proper teacher fetching
+          teachers = [
+            {
+              id: 1,
+              name: "Dr. Sarah Johnson",
+              email: "sarah@example.com",
+              materials_count: 5,
+              exercises_count: 3,
+              quizzes_count: 2,
+            },
+            {
+              id: 2,
+              name: "Prof. Ahmad Rahman",
+              email: "ahmad@example.com",
+              materials_count: 4,
+              exercises_count: 6,
+              quizzes_count: 3,
+            },
+            {
+              id: 3,
+              name: "Ms. Lisa Chen",
+              email: "lisa@example.com",
+              materials_count: 3,
+              exercises_count: 4,
+              quizzes_count: 2,
+            },
+            {
+              id: 4,
+              name: "Mr. David Wilson",
+              email: "david@example.com",
+              materials_count: 6,
+              exercises_count: 2,
+              quizzes_count: 4,
+            },
+          ];
+        }
+      } catch (error) {
+        console.error("Error fetching teachers:", error);
+      }
+
+      // Convert student progress to recent activities
+      const recentActivities: RecentActivity[] = studentProgress
+        .slice(0, 10)
+        .map((progress) => ({
+          id: progress.id,
+          type: progress.progress_type,
+          title:
+            progress.material?.title ||
+            progress.exercise?.title ||
+            progress.quiz?.title ||
+            "Unknown Activity",
+          score: progress.score,
+          completed_at: progress.completed_at,
+        }));
+
+      // Create dashboard stats with real data
+      const dashboardStats: DashboardStats = {
+        materials: {
+          total: materials.length,
+          completed: completedMaterials,
+          in_progress: 0, // This would need additional API endpoint to track
+          percentage: materialsPercentage,
+          items: materials,
+        },
+        exercises: {
+          total: exercises.length,
+          completed: completedExercises,
+          average_score: exerciseAverageScore,
+          percentage: exercisesPercentage,
+          items: exercises,
+        },
+        quizzes: {
+          total: quizzes.length, // Now correctly shows total published quizzes
+          completed: completedQuizzes, // Shows unique completed quizzes
+          average_score: quizAverageScore,
+          percentage: quizzesPercentage,
+          items: quizzes,
+        },
+        teachers,
+        recent_activities: recentActivities,
+      };
+
+      console.log("Final dashboard stats:", dashboardStats);
+      setStats(dashboardStats);
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
       setError("Terjadi kesalahan saat memuat data dashboard");
+      toast({
+        title: "Error",
+        description: "Terjadi kesalahan saat memuat dashboard",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 space-y-4 text-center">
+        <Loader2 className="h-10 w-10 text-primary animate-spin" />
+        <div>
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Memuat data...
+          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Mohon tunggu sebentar
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto p-6">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase();
   };
 
   const formatDate = (dateString: string) => {
@@ -155,655 +624,273 @@ export default function StudentDashboard() {
     return date.toLocaleDateString("id-ID");
   };
 
-  const getProgressColor = (percentage: number) => {
-    if (percentage >= 80) return "text-green-600";
-    if (percentage >= 60) return "text-yellow-600";
-    return "text-red-600";
-  };
-
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return "text-green-600";
-    if (score >= 60) return "text-yellow-600";
-    return "text-red-600";
-  };
-
-  if (loading) {
-    return (
-      <ProtectedRoute>
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
-          <div className="container mx-auto py-8">
-            <div className="flex justify-center items-center h-64">
-              <div className="flex flex-col items-center gap-4">
-                <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                <p className="text-muted-foreground">Memuat dashboard...</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </ProtectedRoute>
-    );
-  }
-
-  if (error) {
-    return (
-      <ProtectedRoute>
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
-          <div className="container mx-auto py-8">
-            <div className="flex justify-center items-center h-64">
-              <div className="flex flex-col items-center gap-4 text-center">
-                <AlertCircle className="h-12 w-12 text-red-500" />
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    Gagal Memuat Dashboard
-                  </h3>
-                  <p className="text-muted-foreground mb-4">{error}</p>
-                  <Button onClick={fetchDashboardData}>Coba Lagi</Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </ProtectedRoute>
-    );
-  }
-
-  if (!dashboardData) {
-    return (
-      <ProtectedRoute>
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
-          <div className="container mx-auto py-8">
-            <div className="text-center py-12">
-              <h3 className="text-lg font-medium text-muted-foreground mb-2">
-                Tidak ada data dashboard
-              </h3>
-              <Button onClick={fetchDashboardData}>Muat Ulang</Button>
-            </div>
-          </div>
-        </div>
-      </ProtectedRoute>
-    );
-  }
-
   return (
-    <ProtectedRoute>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
-        <div className="container mx-auto py-6 space-y-6 px-4 sm:px-6 lg:px-8">
-          {/* Header Section */}
-          <div className="text-center space-y-4">
-            <div className="flex justify-center">
-              <div className="bg-[#108AB1] p-4 rounded-full shadow-md">
-                <GraduationCap className="h-8 w-8 text-white" />
-              </div>
-            </div>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Selamat datang kembali! Mari lanjutkan perjalanan belajar bahasa
-              isyarat Anda
-            </p>
-          </div>
-
-          {/* Call to Action Section */}
-          <Card className="max-w-4xl mx-auto shadow-lg border-0 bg-[#D6F4F4] text-slate-800">
-            <CardContent className="p-6 text-center">
-              <div className="space-y-4">
-                <h2 className="text-2xl font-bold">
-                  Siap Memulai Perjalanan Belajar?
-                </h2>
-                <p className="text-lg text-slate-700 max-w-2xl mx-auto">
-                  Bahasa isyarat adalah jembatan komunikasi. Setiap gerakan
-                  tangan memiliki makna, setiap ekspresi wajah menyampaikan
-                  perasaan. Mari mulai belajar dan buka dunia komunikasi baru!
-                </p>
-                <div className="flex flex-wrap gap-2 justify-center items-center">
-                  <Link
-                    href="/student/materials"
-                    className="flex-1 min-w-[160px] max-w-[200px]"
-                  >
-                    <Button
-                      size="lg"
-                      className="w-full bg-[#108AB1] text-white hover:bg-[#0c7a9a] font-semibold whitespace-normal"
-                    >
-                      <BookOpen className="mr-2 h-5 w-5" />
-                      Mulai Belajar
-                    </Button>
-                  </Link>
-                  <Link
-                    href="/student/exercises"
-                    className="flex-1 min-w-[140px] max-w-[200px]"
-                  >
-                    <Button
-                      size="lg"
-                      variant="outline"
-                      className="w-full border-[#108AB1] text-[#108AB1] hover:bg-[#108AB1]/10 whitespace-normal"
-                    >
-                      <FileText className="mr-2 h-5 w-5" />
-                      Coba Latihan
-                    </Button>
-                  </Link>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      <div className="container mx-auto p-6 space-y-8">
+        {/* Header */}
+        <div className="text-center space-y-2">
+          <h1 className="text-3xl font-bold text-slate-800">
+            Selamat Datang, {user?.name}! 👋
+          </h1>
+          <p className="text-slate-600">
+            Mari lanjutkan perjalanan belajar bahasa isyarat Anda
+          </p>
+        </div>
+        {/* Quick Stats Summary - Fixed Quiz Statistics */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="shadow-lg border-0 bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-blue-100 text-sm">Materi</p>
+                  <p className="text-2xl font-bold">
+                    {stats?.materials.completed || 0}/
+                    {stats?.materials.total || 0}
+                  </p>
                 </div>
+                <BookOpen className="h-8 w-8 text-blue-200" />
               </div>
+              <Progress
+                value={stats?.materials.percentage || 0}
+                className="mt-2 bg-blue-400/30"
+              />
+              <p className="text-xs text-blue-100 mt-1">
+                {stats?.materials.percentage || 0}% selesai
+              </p>
             </CardContent>
           </Card>
 
-          {/* Learning Progress Summary */}
-          <div className="grid gap-4 grid-cols-2 max-w-6xl mx-auto">
-            {/* Card 1: Materi Dipelajari */}
-            <Card className="shadow-lg border-0 bg-gradient-to-br from-[#06D7A0] to-[#108AB1] text-white border-l-4 border-l-[#073A4B]">
-              <CardContent className="p-3 sm:p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-white text-sm font-medium">
-                      Materi Dipelajari
-                    </p>
-                    <p className="text-3xl font-bold">
-                      {dashboardData.materials.completed || 0}/
-                      {dashboardData.materials.total || 0}
-                    </p>
-                    <Progress
-                      value={dashboardData.materials.percentage || 0}
-                      className="mt-2 bg-white/20"
-                    />
-                  </div>
-                  <div className="bg-white/20 p-3 rounded-full">
-                    <BookOpen className="h-6 w-6" />
-                  </div>
+          <Card className="shadow-lg border-0 bg-gradient-to-br from-green-500 to-green-600 text-white">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-green-100 text-sm">Latihan</p>
+                  <p className="text-2xl font-bold">
+                    {stats?.exercises.completed || 0}/
+                    {stats?.exercises.total || 0}
+                  </p>
                 </div>
-              </CardContent>
-            </Card>
+                <Brain className="h-8 w-8 text-green-200" />
+              </div>
+              <Progress
+                value={stats?.exercises.percentage || 0}
+                className="mt-2 bg-green-400/30"
+              />
+              <p className="text-xs text-green-100 mt-1">
+                Rata-rata: {stats?.exercises.average_score || 0}%
+              </p>
+            </CardContent>
+          </Card>
 
-            {/* Card 2: Latihan Selesai */}
-            <Card className="shadow-lg border-0 bg-gradient-to-br from-[#108AB1] to-[#073A4B] text-white border-l-4 border-l-[#06D7A0]">
-              <CardContent className="p-3 sm:p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-white text-sm font-medium">
-                      Latihan Selesai
-                    </p>
-                    <p className="text-3xl font-bold">
-                      {dashboardData.exercises.completed}/
-                      {dashboardData.exercises.total}
-                    </p>
-                    <Progress
-                      value={dashboardData.exercises.percentage}
-                      className="mt-2 bg-white/20"
-                    />
-                  </div>
-                  <div className="bg-white/20 p-3 rounded-full">
-                    <FileText className="h-6 w-6" />
-                  </div>
+          <Card className="shadow-lg border-0 bg-gradient-to-br from-purple-500 to-purple-600 text-white">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-purple-100 text-sm">Quiz</p>
+                  <p className="text-2xl font-bold">
+                    {stats?.quizzes.completed || 0}/{stats?.quizzes.total || 0}
+                  </p>
                 </div>
-              </CardContent>
-            </Card>
+                <Trophy className="h-8 w-8 text-purple-200" />
+              </div>
+              <Progress
+                value={stats?.quizzes.percentage || 0}
+                className="mt-2 bg-purple-400/30"
+              />
+              <p className="text-xs text-purple-100 mt-1">
+                Rata-rata: {stats?.quizzes.average_score || 0}%
+              </p>
+            </CardContent>
+          </Card>
 
-            {/* Card 3: Quiz Selesai */}
-            <Card className="shadow-lg border-0 bg-gradient-to-br from-[#f472b6] to-[#8B5CF6] text-white border-l-4 border-l-[#F7866A]">
-              <CardContent className="p-3 sm:p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-white text-sm font-medium">
-                      Quiz Selesai
-                    </p>
-                    <p className="text-3xl font-bold">
-                      {dashboardData.quizzes.completed}/
-                      {dashboardData.quizzes.total}
-                    </p>
-                    <Progress
-                      value={dashboardData.quizzes.percentage}
-                      className="mt-2 bg-white/20"
-                    />
-                  </div>
-                  <div className="bg-white/20 p-3 rounded-full">
-                    <GraduationCap className="h-6 w-6" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Card 4: Nilai Rata-rata */}
-            <Card className="shadow-lg border-0 bg-gradient-to-br from-[#FFD167] to-[#F7866A] text-slate-800 border-l-4 border-l-[#f472b6]">
-              <CardContent className="p-3 sm:p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-slate-700 text-sm font-medium">
-                      Nilai Rata-rata
-                    </p>
-                    <p className="text-3xl font-bold">
-                      {dashboardData.quizzes.average_score.toFixed(0)}%
-                    </p>
-                    <Progress
-                      value={dashboardData.quizzes.average_score}
-                      className="mt-2 bg-black/10"
-                    />
-                    <p className="mt-2 text-xs text-slate-700">
-                      {dashboardData.quizzes.average_score >= 80
-                        ? "Sangat baik"
-                        : dashboardData.quizzes.average_score >= 60
-                        ? "Baik"
-                        : "Perlu ditingkatkan"}
-                    </p>
-                  </div>
-                  <div className="bg-black/10 p-3 rounded-full">
-                    <Trophy className="h-6 w-6" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Learning Journey */}
-          <Card className="max-w-6xl mx-auto shadow-lg border-0 bg-white/80 backdrop-blur-sm border-l-4 border-l-slate-500">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" />
-                Perjalanan Belajar Anda
-              </CardTitle>
-              <CardDescription className="text-base">
-                "Mulailah dari materi dasar, lanjutkan dengan latihan, dan
-                buktikan kemampuan Anda melalui quiz!"
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="relative">
-                {/* <div className="absolute left-4 top-0 h-full w-0.5 bg-muted"></div> */}
-                <div className="space-y-8">
-                  {/* Materials Progress */}
-                  {dashboardData.materials?.items &&
-                    dashboardData.materials.items.length > 0 &&
-                    dashboardData.materials.items
-                      .slice(0, 3)
-                      .map((material, index) => (
-                        <div key={material.id} className="relative pl-10">
-                          <div
-                            className={`absolute left-0 top-1 flex h-8 w-8 items-center justify-center rounded-full ${
-                              dashboardData.materials.completed > index
-                                ? "bg-primary text-primary-foreground"
-                                : "bg-muted text-muted-foreground"
-                            }`}
-                          >
-                            {index + 1}
-                          </div>
-                          <h3 className="font-medium">{material.title}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            {material.videos_count || 0} video tersedia
-                          </p>
-                          <div className="mt-2">
-                            <Progress
-                              value={
-                                dashboardData.materials.completed > index
-                                  ? 100
-                                  : 0
-                              }
-                              className="h-2"
-                            />
-                          </div>
-                          <div className="mt-2">
-                            <Link href={`/student/materials/${material.id}`}>
-                              <Button variant="outline" size="sm">
-                                {dashboardData.materials.completed > index
-                                  ? "Lihat Kembali"
-                                  : "Mulai"}
-                              </Button>
-                            </Link>
-                          </div>
-                        </div>
-                      ))}
-
-                  {/* Exercises Progress */}
-                  {dashboardData.exercises?.items &&
-                    dashboardData.exercises.items.length > 0 &&
-                    dashboardData.exercises.items
-                      .slice(0, 2)
-                      .map((exercise, index) => (
-                        <div key={exercise.id} className="relative pl-10">
-                          <div
-                            className={`absolute left-0 top-1 flex h-8 w-8 items-center justify-center rounded-full ${
-                              exercise.progress_percentage > 0
-                                ? "bg-primary text-primary-foreground"
-                                : "bg-muted text-muted-foreground"
-                            }`}
-                          >
-                            {(dashboardData.materials?.items?.length || 0) +
-                              index +
-                              1}
-                          </div>
-                          <h3 className="font-medium">{exercise.title}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            {exercise.completed_questions}/
-                            {exercise.total_questions} soal telah dikerjakan
-                          </p>
-                          <div className="mt-2">
-                            <Progress
-                              value={exercise.progress_percentage}
-                              className="h-2"
-                            />
-                          </div>
-                          <div className="mt-2">
-                            <Link href={`/student/exercises/${exercise.id}`}>
-                              <Button variant="outline" size="sm">
-                                {exercise.progress_percentage > 0
-                                  ? "Lanjutkan"
-                                  : "Mulai"}
-                              </Button>
-                            </Link>
-                          </div>
-                        </div>
-                      ))}
-
-                  {/* Quizzes Progress */}
-                  {dashboardData.quizzes?.items &&
-                    dashboardData.quizzes.items.length > 0 &&
-                    dashboardData.quizzes.items
-                      .slice(0, 1)
-                      .map((quiz, index) => (
-                        <div key={quiz.id} className="relative pl-10">
-                          <div
-                            className={`absolute left-0 top-1 flex h-8 w-8 items-center justify-center rounded-full ${
-                              quiz.attempts_count > 0
-                                ? "bg-primary text-primary-foreground"
-                                : "bg-muted text-muted-foreground"
-                            }`}
-                          >
-                            {(dashboardData.materials?.items?.length || 0) +
-                              (dashboardData.exercises?.items?.length || 0) +
-                              index +
-                              1}
-                          </div>
-                          <h3 className="font-medium">{quiz.title}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            {quiz.attempts_count > 0
-                              ? `${
-                                  quiz.attempts_count
-                                } percobaan • Nilai terbaik: ${
-                                  quiz.best_score || 0
-                                }%`
-                              : "Belum dimulai"}
-                          </p>
-                          <div className="mt-2">
-                            <Link href={`/student/quizzes/${quiz.id}`}>
-                              <Button variant="outline" size="sm">
-                                {quiz.attempts_count > 0
-                                  ? "Lihat Detail"
-                                  : "Mulai Quiz"}
-                              </Button>
-                            </Link>
-                          </div>
-                        </div>
-                      ))}
-
-                  {/* Tampilkan pesan jika tidak ada data */}
-                  {(!dashboardData.materials?.items ||
-                    dashboardData.materials.items.length === 0) &&
-                    (!dashboardData.exercises?.items ||
-                      dashboardData.exercises.items.length === 0) &&
-                    (!dashboardData.quizzes?.items ||
-                      dashboardData.quizzes.items.length === 0) && (
-                      <div className="text-center py-8">
-                        <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">
-                          Materi Segera Hadir!
-                        </h3>
-                        {/* <p className="text-muted-foreground mb-4">
-                          Kami sedang menyiapkan materi pembelajaran bahasa
-                          isyarat yang menarik untuk Anda. Pantau terus
-                          dashboard ini untuk update terbaru!
-                        </p> */}
-                        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                          <p className="text-blue-800 text-sm font-medium">
-                            💡 Tips: Sementara menunggu, Anda bisa mempelajari
-                            dasar-dasar bahasa isyarat melalui video online atau
-                            bergabung dengan komunitas bahasa isyarat di sekitar
-                            Anda.
-                          </p>
-                        </div>
-                      </div>
+          <Card className="shadow-lg border-0 bg-gradient-to-br from-orange-500 to-orange-600 text-white">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-orange-100 text-sm">Nilai Keseluruhan</p>
+                  <p className="text-2xl font-bold">
+                    {Math.round(
+                      ((stats?.exercises.average_score || 0) +
+                        (stats?.quizzes.average_score || 0)) /
+                        2
                     )}
+                    %
+                  </p>
                 </div>
+                <TrendingUp className="h-8 w-8 text-orange-200" />
               </div>
+              <Progress
+                value={Math.round(
+                  ((stats?.exercises.average_score || 0) +
+                    (stats?.quizzes.average_score || 0)) /
+                    2
+                )}
+                className="mt-2 bg-orange-400/30"
+              />
+              <p className="text-xs text-orange-100 mt-1">
+                {Math.round(
+                  ((stats?.exercises.average_score || 0) +
+                    (stats?.quizzes.average_score || 0)) /
+                    2
+                ) >= 80
+                  ? "Sangat baik"
+                  : Math.round(
+                      ((stats?.exercises.average_score || 0) +
+                        (stats?.quizzes.average_score || 0)) /
+                        2
+                    ) >= 60
+                  ? "Baik"
+                  : "Perlu ditingkatkan"}
+              </p>
             </CardContent>
           </Card>
+        </div>
 
-          {/* Recent Activities & Recommendations */}
-          <div className="max-w-6xl mx-auto">
-            <Tabs
-              defaultValue="recent"
-              value={activeTab}
-              onValueChange={setActiveTab}
-              className="space-y-6"
+        {/* Discover Materials Section */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-slate-800">Materi</h2>
+            <Link
+              href="/student/materials"
+              className="flex items-center text-blue-600 hover:text-blue-700 text-sm font-medium"
             >
-              <TabsList className="grid w-full grid-cols-2 bg-white/80 backdrop-blur-sm shadow-lg border-0">
-                <TabsTrigger
-                  value="recent"
-                  className="data-[state=active]:bg-slate-500 data-[state=active]:text-white"
-                >
-                  Aktivitas Terbaru
-                </TabsTrigger>
-                <TabsTrigger
-                  value="recommended"
-                  className="data-[state=active]:bg-slate-500 data-[state=active]:text-white"
-                >
-                  Rekomendasi
-                </TabsTrigger>
-              </TabsList>
+              Lihat semua <ChevronRight className="h-4 w-4 ml-1" />
+            </Link>
+          </div>
 
-              <TabsContent value="recent" className="space-y-4">
-                <div className="grid gap-4 grid-cols-1">
-                  {dashboardData.recent_progress &&
-                  dashboardData.recent_progress.length > 0 ? (
-                    dashboardData.recent_progress
-                      .slice(0, 4)
-                      .map((activity) => (
-                        <Card
-                          key={activity.id}
-                          className="shadow-lg border-0 bg-white/90 backdrop-blur-sm hover:shadow-xl transition-all duration-300 border-l-4 border-l-green-500 bg-green-50/30"
-                        >
-                          <CardHeader>
-                            <CardTitle className="flex items-start gap-2 text-sm sm:text-base font-semibold text-gray-900 line-clamp-2 break-words">
-                              {activity.progress_type === "quiz" && (
-                                <Award className="h-4 w-4" />
-                              )}
-                              {activity.progress_type === "exercise" && (
-                                <FileText className="h-4 w-4" />
-                              )}
-                              {activity.progress_type === "material" && (
-                                <BookOpen className="h-4 w-4" />
-                              )}
-                              {activity.material?.title ||
-                                activity.exercise?.title ||
-                                activity.quiz?.title}
-                            </CardTitle>
-                            <CardDescription>
-                              Diselesaikan {formatDate(activity.completed_at)}
-                            </CardDescription>
-                          </CardHeader>
-                          <CardFooter>
-                            <Link
-                              href={
-                                activity.material
-                                  ? `/student/materials/${activity.material.id}`
-                                  : activity.exercise
-                                  ? `/student/exercises/${activity.exercise.id}`
-                                  : activity.quiz
-                                  ? `/student/quizzes/${activity.quiz.id}`
-                                  : "#"
-                              }
-                              className="w-full"
-                            >
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="w-full"
-                              >
-                                Lihat Detail
-                              </Button>
-                            </Link>
-                          </CardFooter>
-                        </Card>
-                      ))
-                  ) : (
-                    <div className="col-span-full text-center py-8">
-                      <p className="text-muted-foreground">
-                        Belum ada aktivitas terbaru
-                      </p>
+          <div className="overflow-x-auto pb-2">
+            <div className="flex space-x-4 min-w-max">
+              {stats?.materials?.items?.slice(0, 5).map((material) => (
+                <Card
+                  key={material.id}
+                  className="min-w-[280px] max-w-[280px] flex-shrink-0 shadow-lg border-0 bg-white hover:shadow-xl transition-all duration-300"
+                >
+                  <CardContent className="p-0">
+                    <div className="relative">
+                      {material.thumbnail ? (
+                        <img
+                          src={
+                            buildUrl(`/storage/${material.thumbnail}`) ||
+                            "/placeholder.svg"
+                          }
+                          alt={material.title}
+                          className="w-full h-40 object-cover rounded-t-lg"
+                        />
+                      ) : (
+                        <div className="w-full h-40 bg-gradient-to-br from-blue-100 to-purple-100 rounded-t-lg flex items-center justify-center">
+                          <BookOpen className="h-12 w-12 text-blue-400" />
+                        </div>
+                      )}
                     </div>
-                  )}
+                    <div className="p-4 space-y-3">
+                      <h3 className="font-semibold text-slate-800 line-clamp-2 leading-tight">
+                        {material.title}
+                      </h3>
+                      <p className="text-sm text-slate-600 line-clamp-2">
+                        {material.description}
+                      </p>
+                      <div className="flex items-center space-x-2">
+                        <Avatar className="h-6 w-6 mb-1">
+                          <AvatarFallback className="text-xs bg-blue-100 text-blue-600">
+                            {getInitials(material.creator.name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-xs text-slate-500 mb-1">
+                          {material.creator.name}
+                        </span>
+                      </div>
+                      <Link href={`/student/materials/${material.id}`}>
+                        <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                          <BookOpen className="h-4 w-4 mr-2" />
+                          Mulai Belajar
+                        </Button>
+                      </Link>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+
+              {(!stats?.materials?.items ||
+                stats.materials.items.length === 0) && (
+                <div className="min-w-[280px] flex items-center justify-center">
+                  <div className="text-center py-8">
+                    <BookOpen className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                    <p className="text-slate-500">Materi segera hadir!</p>
+                  </div>
                 </div>
-              </TabsContent>
+              )}
+            </div>
+          </div>
+        </div>
 
-              <TabsContent value="recommended" className="space-y-4">
-                <div className="grid gap-4 grid-cols-2">
-                  {/* Recommended Materials */}
-                  {dashboardData.materials?.items &&
-                    dashboardData.materials.items.length > 0 &&
-                    dashboardData.materials.items
-                      .filter(
-                        (_, index) => index >= dashboardData.materials.completed
-                      )
-                      .slice(0, 2)
-                      .map((material) => (
-                        <Card
-                          key={material.id}
-                          className="shadow-lg border-0 bg-white/90 backdrop-blur-sm hover:shadow-xl transition-all duration-300 border-l-4 border-l-green-500 bg-green-50/30"
-                        >
-                          <CardHeader>
-                            <CardTitle>{material.title}</CardTitle>
-                            <CardDescription>Belum dipelajari</CardDescription>
-                          </CardHeader>
-                          <CardContent>
-                            <div className="aspect-video rounded-md bg-gradient-to-br from-green-100 to-teal-100 dark:from-green-900/20 dark:to-teal-900/20 flex items-center justify-center">
-                              <BookOpen className="h-12 w-12 text-green-400" />
-                            </div>
-                            <p className="mt-2 text-sm text-muted-foreground">
-                              {material.videos_count || 0} video • Estimasi
-                              waktu: {(material.videos_count || 0) * 3} menit
-                            </p>
-                          </CardContent>
-                          <CardFooter>
-                            <Link
-                              href={`/student/materials/${material.id}`}
-                              className="w-full"
-                            >
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="w-full"
-                              >
-                                Mulai Belajar
-                              </Button>
-                            </Link>
-                          </CardFooter>
-                        </Card>
-                      ))}
+        {/* Recent Activities Section */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-slate-800">
+              Aktivitas Terbaru
+            </h2>
+            <Link
+              href="/student/progress"
+              className="flex items-center text-blue-600 hover:text-blue-700 text-sm font-medium"
+            >
+              Lihat semua <ChevronRight className="h-4 w-4 ml-1" />
+            </Link>
+          </div>
 
-                  {/* Recommended Exercises */}
-                  {dashboardData.exercises?.items &&
-                    dashboardData.exercises.items.length > 0 &&
-                    dashboardData.exercises.items
-                      .filter((exercise) => exercise.progress_percentage === 0)
-                      .slice(0, 2)
-                      .map((exercise) => (
-                        <Card
-                          key={exercise.id}
-                          className="shadow-lg border-0 bg-white/90 backdrop-blur-sm hover:shadow-xl transition-all duration-300 border-l-4 border-l-blue-500 bg-blue-50/30"
-                        >
-                          <CardHeader>
-                            <CardTitle>{exercise.title}</CardTitle>
-                            <CardDescription>Belum dikerjakan</CardDescription>
-                          </CardHeader>
-                          <CardContent>
-                            <div className="aspect-video rounded-md bg-gradient-to-br from-blue-100 to-cyan-100 dark:from-blue-900/20 dark:to-cyan-900/20 flex items-center justify-center">
-                              <FileText className="h-12 w-12 text-blue-400" />
-                            </div>
-                            <p className="mt-2 text-sm text-muted-foreground">
-                              {exercise.total_questions} soal • Estimasi waktu:{" "}
-                              {Math.ceil(exercise.total_questions * 1.5)} menit
-                            </p>
-                          </CardContent>
-                          <CardFooter>
-                            <Link
-                              href={`/student/exercises/${exercise.id}`}
-                              className="w-full"
-                            >
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="w-full"
-                              >
-                                Mulai Latihan
-                              </Button>
-                            </Link>
-                          </CardFooter>
-                        </Card>
-                      ))}
-
-                  {/* Recommended Quizzes */}
-                  {dashboardData.quizzes?.items &&
-                    dashboardData.quizzes.items.length > 0 &&
-                    dashboardData.quizzes.items
-                      .filter((quiz) => quiz.attempts_count === 0)
-                      .slice(0, 2)
-                      .map((quiz) => (
-                        <Card
-                          key={quiz.id}
-                          className="shadow-lg border-0 bg-white/90 backdrop-blur-sm hover:shadow-xl transition-all duration-300 border-l-4 border-l-purple-500 bg-purple-50/30"
-                        >
-                          <CardHeader>
-                            <CardTitle>{quiz.title}</CardTitle>
-                            <CardDescription>Belum dikerjakan</CardDescription>
-                          </CardHeader>
-                          <CardContent>
-                            <div className="aspect-video rounded-md bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/20 dark:to-pink-900/20 flex items-center justify-center">
-                              <GraduationCap className="h-12 w-12 text-purple-400" />
-                            </div>
-                            <p className="mt-2 text-sm text-muted-foreground">
-                              {quiz.total_questions} soal • Estimasi waktu:{" "}
-                              {Math.ceil(quiz.total_questions * 2)} menit
-                            </p>
-                          </CardContent>
-                          <CardFooter>
-                            <Link
-                              href={`/student/quizzes/${quiz.id}`}
-                              className="w-full"
-                            >
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="w-full"
-                              >
-                                Mulai Quiz
-                              </Button>
-                            </Link>
-                          </CardFooter>
-                        </Card>
-                      ))}
-
-                  {/* Tampilkan pesan jika tidak ada rekomendasi */}
-                  {(!dashboardData.materials?.items ||
-                    dashboardData.materials.items.filter(
-                      (_, index) => index >= dashboardData.materials.completed
-                    ).length === 0) &&
-                    (!dashboardData.exercises?.items ||
-                      dashboardData.exercises.items.filter(
-                        (e) => e.progress_percentage === 0
-                      ).length === 0) &&
-                    (!dashboardData.quizzes?.items ||
-                      dashboardData.quizzes.items.filter(
-                        (q) => q.attempts_count === 0
-                      ).length === 0) && (
-                      <div className="col-span-full text-center py-8">
-                        <Trophy className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">
-                          Selamat!
-                        </h3>
-                        <p className="text-muted-foreground">
-                          Anda telah menyelesaikan semua materi yang tersedia
+          <div className="overflow-x-auto pb-2">
+            <div className="flex space-x-4 min-w-max">
+              {stats?.recent_activities?.slice(0, 5).map((activity) => (
+                <Card
+                  key={activity.id}
+                  className="min-w-[240px] max-w-[240px] flex-shrink-0 shadow-md border-0 bg-white hover:shadow-lg transition-all duration-300"
+                >
+                  <CardContent className="p-4 space-y-3">
+                    <div className="flex items-center space-x-2">
+                      <div
+                        className={`p-2 rounded-full ${
+                          activity.type === "material"
+                            ? "bg-blue-100"
+                            : activity.type === "exercise"
+                            ? "bg-green-100"
+                            : "bg-purple-100"
+                        }`}
+                      >
+                        {activity.type === "material" && (
+                          <BookOpen className="h-4 w-4 text-blue-600" />
+                        )}
+                        {activity.type === "exercise" && (
+                          <FileText className="h-4 w-4 text-green-600" />
+                        )}
+                        {activity.type === "quiz" && (
+                          <Award className="h-4 w-4 text-purple-600" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-slate-800 text-sm line-clamp-2">
+                          {activity.title}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {formatDate(activity.completed_at)}
                         </p>
                       </div>
-                    )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+
+              {(!stats?.recent_activities ||
+                stats.recent_activities.length === 0) && (
+                <div className="min-w-[240px] flex items-center justify-center">
+                  <div className="text-center py-8">
+                    <TrendingUp className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                    <p className="text-slate-500">Belum ada aktivitas</p>
+                  </div>
                 </div>
-              </TabsContent>
-            </Tabs>
+              )}
+            </div>
           </div>
         </div>
       </div>
-    </ProtectedRoute>
+    </div>
   );
 }

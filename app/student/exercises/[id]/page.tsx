@@ -17,10 +17,12 @@ import {
   Users,
   Calendar,
   Star,
+  ArrowRight,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useApi } from "@/hooks/use-api";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface Exercise {
   id: number;
@@ -55,6 +57,9 @@ export default function ExerciseOverviewPage({
   const [exercise, setExercise] = useState<Exercise | null>(null);
   const [loading, setLoading] = useState(true);
   const { get, post, put, delete: del, buildUrl } = useApi();
+  const [showInfo, setShowInfo] = useState(false); // << Tambahkan state ini
+
+  const toggleShowInfo = () => setShowInfo((prev) => !prev); // Fungsi toggle
 
   useEffect(() => {
     fetchExercise();
@@ -207,7 +212,7 @@ export default function ExerciseOverviewPage({
 
         {/* Statistics */}
         <div className="rounded-xl bg-gradient-to-br from-[#06b6d4] to-[#0284c7] dark:from-[#1E3A8A] dark:to-[#1E40AF] p-4 sm:p-6 shadow-md">
-          <div className="grid grid-cols-4 gap-4 text-center">
+          <div className="grid grid-cols-3 gap-4 text-center">
             <div className="flex flex-col items-center justify-center gap-1">
               <div className="text-2xl sm:text-3xl font-bold text-white">
                 {exercise.total_questions}
@@ -263,96 +268,86 @@ export default function ExerciseOverviewPage({
             </div>
           </div>
         )}
-
-        {/* Description */}
-        <div className="bg-white dark:bg-slate-800 rounded-lg p-3 sm:p-4 shadow-sm">
-          <div className="flex items-center gap-2 mb-3">
-            <BookOpen className="h-4 w-4 sm:h-5 sm:w-5 text-[#3B82F6]" />
-            <h2 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white">
-              Deskripsi Latihan
-            </h2>
-          </div>
-          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-            {exercise.description}
-          </p>
-        </div>
-
-        {/* Exercise Info */}
-        <div className="bg-white dark:bg-slate-800 rounded-lg p-3 sm:p-4 shadow-sm">
-          <div className="flex items-center gap-2 mb-3">
-            <Target className="h-4 w-4 sm:h-5 sm:w-5 text-[#3B82F6]" />
-            <h2 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white">
-              Informasi Latihan
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
-            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-              <Users className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span>Dibuat oleh: {exercise.creator.name}</span>
-            </div>
-            {exercise.created_at && (
-              <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span>Dibuat: {formatDate(exercise.created_at)}</span>
-              </div>
+        <div className="space-y-4">
+          {/* Header Teks Interaktif */}
+          <div
+            onClick={toggleShowInfo}
+            className="flex items-center justify-between cursor-pointer text-sm font-medium text-[#3B82F6]"
+          >
+            <span>
+              {showInfo
+                ? "Sembunyikan Detail Latihan"
+                : "Tampilkan Detail Latihan"}
+            </span>
+            {showInfo ? (
+              <ChevronUp className="w-4 h-4 text-[#3B82F6]" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-[#3B82F6]" />
             )}
-            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-              <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4" />
-              <Badge
-                className={`${getDifficultyColor(
-                  exercise.difficulty_level
-                )} text-xs`}
-              >
-                {getDifficultyLabel(exercise.difficulty_level)}
-              </Badge>
-            </div>
-            {/* <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-              <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span>Estimasi: ~{Math.ceil(exercise.total_questions * 1.5)} menit</span>
-            </div> */}
           </div>
-        </div>
 
-        {/* Instructions */}
-        <div className="bg-white dark:bg-slate-800 rounded-lg p-3 sm:p-4 shadow-sm">
-          <div className="flex items-center gap-2 mb-3">
-            <Brain className="h-4 w-4 sm:h-5 sm:w-5 text-[#3B82F6]" />
-            <h2 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white">
-              Petunjuk Pengerjaan
-            </h2>
-          </div>
-          <div className="space-y-3">
-            <div className="flex items-start gap-3">
-              <div className="w-6 h-6 rounded-full bg-[#3B82F6] text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
-                1
+          {/* Konten Slide */}
+          <div
+            className={`transition-all duration-500 overflow-hidden ${
+              showInfo ? "max-h-[1000px] opacity-100" : "max-h-0 opacity-0"
+            }`}
+          >
+            {/* Informasi Latihan */}
+            <div className="bg-white dark:bg-slate-800 rounded-lg p-3 sm:p-4 shadow-sm mb-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Target className="h-4 w-4 sm:h-5 sm:w-5 text-[#3B82F6]" />
+                <h2 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white">
+                  Informasi Latihan
+                </h2>
               </div>
-              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 pt-0.5">
-                Tonton video pembelajaran terlebih dahulu untuk memahami materi
-              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
+                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                  <BookOpen className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span>Deskripsi: {exercise.description}</span>
+                </div>
+                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                  <Users className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span>Dibuat oleh: {exercise.creator.name}</span>
+                </div>
+                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                  <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span>Tingkat Kesulitan:</span>
+                  <Badge
+                    className={`${getDifficultyColor(
+                      exercise.difficulty_level
+                    )} text-xs`}
+                  >
+                    {getDifficultyLabel(exercise.difficulty_level)}
+                  </Badge>
+                </div>
+              </div>
             </div>
-            <div className="flex items-start gap-3">
-              <div className="w-6 h-6 rounded-full bg-[#3B82F6] text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
-                2
+
+            {/* Petunjuk Pengerjaan */}
+            <div className="bg-white dark:bg-slate-800 rounded-lg p-3 sm:p-4 shadow-sm">
+              <div className="flex items-center gap-2 mb-3">
+                <Brain className="h-4 w-4 sm:h-5 sm:w-5 text-[#3B82F6]" />
+                <h2 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white">
+                  Petunjuk Pengerjaan
+                </h2>
               </div>
-              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 pt-0.5">
-                Kerjakan latihan dengan memilih jawaban yang paling tepat
-              </p>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="w-6 h-6 rounded-full bg-[#3B82F6] text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
-                3
+              <div className="space-y-3">
+                {[
+                  "Tonton video pembelajaran terlebih dahulu untuk memahami materi",
+                  "Kerjakan latihan dengan memilih jawaban yang paling tepat",
+                  "Dapatkan feedback langsung setelah menjawab setiap soal",
+                  "Anda dapat mengulang latihan untuk meningkatkan skor",
+                ].map((text, i) => (
+                  <div key={i} className="flex items-start gap-3">
+                    <div className="w-6 h-6 rounded-full bg-[#3B82F6] text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
+                      {i + 1}
+                    </div>
+                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 pt-0.5">
+                      {text}
+                    </p>
+                  </div>
+                ))}
               </div>
-              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 pt-0.5">
-                Dapatkan feedback langsung setelah menjawab setiap soal
-              </p>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="w-6 h-6 rounded-full bg-[#3B82F6] text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
-                4
-              </div>
-              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 pt-0.5">
-                Anda dapat mengulang latihan untuk meningkatkan skor
-              </p>
             </div>
           </div>
         </div>
@@ -360,7 +355,7 @@ export default function ExerciseOverviewPage({
         {/* Action Buttons */}
         <div className="grid gap-3 sm:gap-4">
           <Link href={`/student/exercises/${exercise.id}/video`}>
-            <div className="bg-white dark:bg-slate-800 rounded-lg p-3 sm:p-4 shadow-sm border-l-4 border-l-[#3B82F6] hover:shadow-md transition-shadow cursor-pointer">
+            <div className="relative bg-white dark:bg-slate-800 rounded-lg p-3 sm:p-4 shadow-sm border-l-4 border-l-[#3B82F6] hover:shadow-md transition-shadow cursor-pointer">
               <div className="flex items-center gap-3 sm:gap-4">
                 <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-[#3B82F6] to-[#1E40AF] flex items-center justify-center flex-shrink-0">
                   <Play className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
@@ -369,16 +364,16 @@ export default function ExerciseOverviewPage({
                   <h3 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white mb-1">
                     Tonton Video Pembelajaran
                   </h3>
-                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                    Pelajari materi melalui video sebelum mengerjakan latihan
-                  </p>
                 </div>
               </div>
+
+              {/* Anak panah kanan */}
+              <ArrowRight className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             </div>
           </Link>
 
           <Link href={`/student/exercises/${exercise.id}/practice`}>
-            <div className="bg-white dark:bg-slate-800 rounded-lg p-3 sm:p-4 shadow-sm border-l-4 border-l-green-500 hover:shadow-md transition-shadow cursor-pointer">
+            <div className="relative bg-white dark:bg-slate-800 rounded-lg p-3 sm:p-4 shadow-sm border-l-4 border-l-green-500 hover:shadow-md transition-shadow cursor-pointer">
               <div className="flex items-center gap-3 sm:gap-4">
                 <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center flex-shrink-0">
                   <Zap className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
@@ -389,13 +384,11 @@ export default function ExerciseOverviewPage({
                       ? "Ulangi Latihan"
                       : "Mulai Mengerjakan Latihan"}
                   </h3>
-                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                    {exercise.is_completed
-                      ? "Kerjakan ulang untuk meningkatkan skor Anda"
-                      : "Kerjakan soal-soal latihan untuk menguji pemahaman"}
-                  </p>
                 </div>
               </div>
+
+              {/* Anak panah kanan */}
+              <ArrowRight className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             </div>
           </Link>
         </div>

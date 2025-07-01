@@ -19,6 +19,7 @@ import {
   Zap,
   ChevronLeft,
   ChevronRight,
+  Loader2,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useApi } from "@/hooks/use-api"
@@ -109,10 +110,18 @@ export default function StudentExercises() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      <div className="flex flex-col items-center justify-center h-64 space-y-4 text-center">
+        <Loader2 className="h-10 w-10 text-primary animate-spin" />
+        <div>
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Memuat data...
+          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Mohon tunggu sebentar
+          </p>
+        </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -348,7 +357,7 @@ function ExerciseCard({ exercise }: { exercise: Exercise }) {
   }
 
   return (
-    <div className={`bg-white dark:bg-slate-800 rounded-lg p-3 sm:p-4 shadow-sm border-l-4 ${getStatusColor()}`}>
+    <div className={`bg-white dark:bg-slate-800 rounded-lg p-4 sm:p-4 shadow-sm border-l-4 ${getStatusColor()}`}>
       <div className="flex gap-3 sm:gap-4">
         {/* Icon */}
         <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700 flex-shrink-0">
@@ -358,9 +367,9 @@ function ExerciseCard({ exercise }: { exercise: Exercise }) {
         </div>
 
         {/* Content */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 flex flex-col justify-between">
           <div className="flex items-start justify-between mb-2">
-            <h3 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white line-clamp-2 pr-2">
+            <h3 className="font-semibold text-lg sm:text-base text-gray-900 dark:text-white line-clamp-2 pr-2">
               {exercise.title}
             </h3>
             {getStatusBadge()}
@@ -369,26 +378,6 @@ function ExerciseCard({ exercise }: { exercise: Exercise }) {
           <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1">
             {exercise.material?.title || "No Material"}
           </p>
-          <p className="text-xs text-gray-500 dark:text-gray-500 line-clamp-2 mb-3">{exercise.description}</p>
-
-          <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs text-gray-500 dark:text-gray-400 mb-3">
-            <span className="flex items-center gap-1">
-              <Target className="h-3 w-3" />
-              {exercise.total_questions} soal
-            </span>
-            <span className="flex items-center gap-1">
-              <Trophy className="h-3 w-3" />
-              {exercise.total_points} poin
-            </span>
-            <span className="flex items-center gap-1">
-              <Users className="h-3 w-3" />
-              {exercise.creator?.name || "Admin"}
-            </span>
-            <span className="flex items-center gap-1">
-              <Calendar className="h-3 w-3" />
-              {formatDate(exercise.created_at)}
-            </span>
-          </div>
 
           <div className="space-y-2 mb-3">
             <Progress value={exercise.is_completed ? 100 : progressPercentage} className="h-2" />

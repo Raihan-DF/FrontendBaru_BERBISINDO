@@ -525,18 +525,18 @@ export default function QuizAttemptPage({
         setResults(resultData);
         setShowResults(true);
 
-        if (isAutoSubmit) {
-          toast({
-            title: "Quiz Dikirim Otomatis",
-            description: "Quiz telah dikirim karena waktu habis.",
-            variant: "default",
-          });
-        } else {
-          toast({
-            title: "Quiz Berhasil Dikirim",
-            description: `Skor Anda: ${resultData.score}/${resultData.max_score} (${resultData.percentage}%)`,
-          });
-        }
+        // if (isAutoSubmit) {
+        //   toast({
+        //     title: "Quiz Dikirim Otomatis",
+        //     description: "Quiz telah dikirim karena waktu habis.",
+        //     variant: "default",
+        //   });
+        // } else {
+        //   toast({
+        //     title: "Quiz Berhasil Dikirim",
+        //     description: `Skor Anda: ${resultData.score}/${resultData.max_score} (${resultData.percentage}%)`,
+        //   });
+        // }
       } else {
         const errorData = await response.json();
 
@@ -962,10 +962,6 @@ export default function QuizAttemptPage({
         {showVideo && currentQuestionHasVideo() && (
           <div className="bg-white dark:bg-slate-800 rounded-lg p-3 sm:p-4 shadow-sm">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white">
-                Video:{" "}
-                {currentQuestion.material_video?.title || "Video Pembelajaran"}
-              </h3>
               {hasWatchedVideo && (
                 <Badge className="bg-green-100 text-green-800 text-xs">
                   <CheckCircle className="h-3 w-3 mr-1" />
@@ -1173,7 +1169,7 @@ export default function QuizAttemptPage({
         </div>
 
         {/* Submit Warning */}
-        {timeLeft <= 300 && (
+        {timeLeft <= 20 && (
           <div className="bg-white dark:bg-slate-800 rounded-lg p-3 sm:p-4 shadow-sm border-l-4 border-l-red-500">
             <div className="flex items-center gap-3">
               <AlertTriangle className="h-6 w-6 text-red-500 flex-shrink-0" />

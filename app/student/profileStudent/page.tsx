@@ -196,6 +196,21 @@ export default function StudentProfile() {
     completedQuizzes: 3,
     averageScore: 85,
   };
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 space-y-4 text-center">
+        <Loader2 className="h-10 w-10 text-primary animate-spin" />
+        <div>
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Memuat data...
+          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Mohon tunggu sebentar
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-slate-50 to-indigo-50">

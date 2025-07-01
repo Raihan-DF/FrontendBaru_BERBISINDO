@@ -313,9 +313,6 @@ export default function ExerciseVideoPage({ params }: { params: Promise<{ id: st
                 <h2 className="font-semibold text-base sm:text-lg text-gray-900 dark:text-white mb-1">
                   {currentQuestion.material_video.title}
                 </h2>
-                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                  Soal {currentQuestion.order}: {currentQuestion.question}
-                </p>
               </div>
 
               <div className="aspect-video rounded-md bg-black flex items-center justify-center relative overflow-hidden">

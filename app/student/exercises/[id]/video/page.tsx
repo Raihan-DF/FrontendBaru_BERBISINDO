@@ -131,17 +131,31 @@ export default function ExerciseVideoPage({ params }: { params: Promise<{ id: st
     return buildUrl(`/exercise-video/${exercise?.id}/${question.id}`)
   }
 
-  // SIMPLIFIED: Video event handlers like materials
+  // SIMPLIFIED: Video event handlers like working materials version
+  const handleVideoPlay = () => {
+    setVideoLoading(false)
+    setVideoCanPlay(true)
+  }
+
+  const handleVideoPause = () => {
+    // Keep states as they are
+  }
+
+  const handleVideoEnded = () => {
+    setVideoLoading(false)
+    setVideoCanPlay(true)
+  }
+
   const handleVideoLoadStart = () => {
-    console.log("Video loading started")
     setVideoLoading(true)
+    setVideoError(null)
     setVideoCanPlay(false)
   }
 
   const handleVideoCanPlay = () => {
-    console.log("Video can play")
     setVideoLoading(false)
     setVideoCanPlay(true)
+    setVideoError(null)
   }
 
   const handleVideoError = (e: React.SyntheticEvent<HTMLVideoElement>) => {
@@ -176,15 +190,18 @@ export default function ExerciseVideoPage({ params }: { params: Promise<{ id: st
     setVideoLoading(true)
     setVideoCanPlay(false)
 
-    const videoElement = document.querySelector("video") as HTMLVideoElement
-    if (videoElement) {
-      videoElement.load()
-      setTimeout(() => {
-        videoElement.play().catch((err) => {
-          console.warn("Auto-play failed:", err)
-        })
-      }, 500)
-    }
+    // Small delay to ensure DOM update
+    setTimeout(() => {
+      const videoElement = document.querySelector("video") as HTMLVideoElement
+      if (videoElement) {
+        videoElement.load()
+        setTimeout(() => {
+          videoElement.play().catch((err) => {
+            console.warn("Auto-play failed:", err)
+          })
+        }, 500)
+      }
+    }, 100)
   }
 
   const handlePreviousVideo = () => {
@@ -266,12 +283,6 @@ export default function ExerciseVideoPage({ params }: { params: Promise<{ id: st
             <Badge className={`${getDifficultyColor(exercise.difficulty_level)} text-xs`}>
               {getDifficultyText(exercise.difficulty_level)}
             </Badge>
-            {/* <Link href={`/student/exercises/${exercise.id}/practice`}>
-              <Button className="bg-[#3B82F6] hover:bg-[#2563EB] text-xs sm:text-sm">
-                <span className="hidden sm:inline">Mulai Latihan</span>
-                <span className="sm:hidden">Latihan</span>
-              </Button>
-            </Link> */}
           </div>
         </div>
 
@@ -338,19 +349,21 @@ export default function ExerciseVideoPage({ params }: { params: Promise<{ id: st
                   </div>
                 )}
 
-                {/* SIMPLIFIED: Video element like materials but with original styling */}
+                {/* WORKING: Simplified video element like materials */}
                 <video
-                  key={`${currentQuestion.id}-${currentQuestion.material_video.id}`}
-                  className="w-full h-full object-contain"
+                  key={currentVideoIndex} // Simple key for reload
+                  className="w-full h-full"
                   controls
                   playsInline
+                  onPlay={handleVideoPlay}
+                  onPause={handleVideoPause}
+                  onEnded={handleVideoEnded}
                   onLoadStart={handleVideoLoadStart}
                   onCanPlay={handleVideoCanPlay}
                   onError={handleVideoError}
-                  style={{ backgroundColor: "#000" }}
                 >
                   <source src={getVideoStreamUrl(currentQuestion)} type="video/mp4" />
-                  <p className="text-white p-4">Browser Anda tidak mendukung pemutar video.</p>
+                  Your browser does not support the video tag.
                 </video>
               </div>
 
@@ -377,7 +390,7 @@ export default function ExerciseVideoPage({ params }: { params: Promise<{ id: st
                     onClick={() => setCurrentVideoIndex(index)}
                     className={`w-full text-left p-3 rounded-md border transition-colors ${
                       index === currentVideoIndex
-                        ? "bg-[#3B82F6] text-white border-[#3B82F6]"
+                        ? " text-black border-[#3B82F6] border-2 rounded-lg"
                         : "hover:bg-gray-50 dark:hover:bg-slate-700 border-gray-200 dark:border-gray-700"
                     }`}
                   >

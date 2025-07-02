@@ -38,7 +38,7 @@ export default function ForgotPasswordPage() {
     setModalState("sending")
 
     try {
-      const response = await fetch(buildUrl("api/password/forgot"), {
+      const response = await fetch(buildUrl("/api/password/forgot"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

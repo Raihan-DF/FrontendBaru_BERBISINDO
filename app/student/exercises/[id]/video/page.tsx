@@ -1,220 +1,180 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useEffect, use } from "react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, ChevronLeft, ChevronRight, Loader2, AlertCircle, RefreshCw } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
-import { useRouter } from "next/navigation"
-import { useApi } from "@/hooks/use-api"
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import {
+  ArrowLeft,
+  Play,
+  Pause,
+  CheckCircle,
+  RotateCcw,
+  Eye,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import { useApi } from "@/hooks/use-api";
 
 interface MaterialVideo {
-  id: number
-  title: string
-  description: string
-  video_filename: string
-  video_path: string
-  order: number
+  id: number;
+  title: string;
+  description: string;
+  video_filename: string;
+  video_path: string;
+  order: number;
 }
 
 interface ExerciseQuestion {
-  id: number
-  exercise_id: number
-  material_video_id: number
-  question: string
-  points: number
-  order: number
-  material_video: MaterialVideo
+  id: number;
+  exercise_id: number;
+  material_video_id: number;
+  question: string;
+  points: number;
+  order: number;
+  material_video: MaterialVideo;
 }
 
 interface Exercise {
-  id: number
-  title: string
-  description: string
-  material_id: number
-  difficulty_level: number
-  total_questions: number
-  total_points: number
-  creator: {
-    id: number
-    name: string
-  }
+  id: number;
+  title: string;
+  description: string;
+  material_id: number;
+  difficulty_level: number;
+  questions: ExerciseQuestion[];
   material: {
-    id: number
-    title: string
-  }
-  questions: ExerciseQuestion[]
+    id: number;
+    title: string;
+  };
 }
 
-export default function ExerciseVideoPage({ params }: { params: Promise<{ id: string }> }) {
-  const { toast } = useToast()
-  const router = useRouter()
-  const resolvedParams = use(params)
-  const [exercise, setExercise] = useState<Exercise | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [currentVideoIndex, setCurrentVideoIndex] = useState(0)
-  const [videoLoading, setVideoLoading] = useState(true)
-  const [videoError, setVideoError] = useState<string | null>(null)
-  const [videoCanPlay, setVideoCanPlay] = useState(false)
-  const { get, post, put, delete: del, buildUrl } = useApi()
+export default function ExerciseVideoPage() {
+  const { id } = useParams();
+  const router = useRouter();
+  const { toast } = useToast();
+  const { buildUrl } = useApi();
+
+  const [exercise, setExercise] = useState<Exercise | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [hasWatchedVideo, setHasWatchedVideo] = useState(false);
 
   useEffect(() => {
-    fetchExercise()
-  }, [resolvedParams.id])
-
-  // Reset video states when video changes
-  useEffect(() => {
-    setVideoLoading(true)
-    setVideoError(null)
-    setVideoCanPlay(false)
-  }, [currentVideoIndex])
+    fetchExercise();
+  }, [id]);
 
   const fetchExercise = async () => {
     try {
-      const token = localStorage.getItem("token")
-
+      const token = localStorage.getItem("token");
       if (!token) {
         toast({
           title: "Error",
           description: "Token tidak ditemukan. Silakan login kembali.",
           variant: "destructive",
-        })
-        router.push("/login")
-        return
+        });
+        router.push("/auth/login");
+        return;
       }
 
-      const response = await fetch(buildUrl(`/api/exercises/${resolvedParams.id}`), {
+      const response = await fetch(buildUrl(`/api/exercises/${id}`), {
         headers: {
           Authorization: `Bearer ${token}`,
           Accept: "application/json",
         },
-      })
+      });
 
       if (response.status === 401) {
         toast({
           title: "Session Expired",
           description: "Sesi Anda telah berakhir. Silakan login kembali.",
           variant: "destructive",
-        })
-        localStorage.removeItem("token")
-        router.push("/login")
-        return
+        });
+        localStorage.removeItem("token");
+        router.push("/auth/login");
+        return;
       }
 
-      if (response.ok) {
-        const data = await response.json()
-        setExercise(data)
-      } else {
-        toast({
-          title: "Error",
-          description: "Gagal memuat data latihan",
-          variant: "destructive",
-        })
+      if (!response.ok) {
+        throw new Error("Failed to fetch exercise");
       }
+
+      const data = await response.json();
+      setExercise(data);
     } catch (error) {
-      console.error("Error fetching exercise:", error)
+      console.error("Error fetching exercise:", error);
       toast({
         title: "Error",
-        description: "Terjadi kesalahan saat memuat data",
+        description: "Gagal memuat data exercise",
         variant: "destructive",
-      })
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  // Video URL handling
+  // SIMPLIFIED: Video URL handling like materials
   const getVideoStreamUrl = (question: ExerciseQuestion) => {
-    return buildUrl(`/exercise-video/${exercise?.id}/${question.id}`)
-  }
+    return buildUrl(`/exercise-video/${exercise?.id}/${question.id}`);
+  };
 
-  // SIMPLIFIED: Video event handlers like working materials version
+  // SIMPLIFIED: Video event handlers like materials
   const handleVideoPlay = () => {
-    setVideoLoading(false)
-    setVideoCanPlay(true)
-  }
+    setIsPlaying(true);
+  };
 
   const handleVideoPause = () => {
-    // Keep states as they are
-  }
+    setIsPlaying(false);
+  };
 
   const handleVideoEnded = () => {
-    setVideoLoading(false)
-    setVideoCanPlay(true)
-  }
+    setIsPlaying(false);
+    setHasWatchedVideo(true);
+  };
 
-  const handleVideoLoadStart = () => {
-    setVideoLoading(true)
-    setVideoError(null)
-    setVideoCanPlay(false)
-  }
-
-  const handleVideoCanPlay = () => {
-    setVideoLoading(false)
-    setVideoCanPlay(true)
-    setVideoError(null)
-  }
-
-  const handleVideoError = (e: React.SyntheticEvent<HTMLVideoElement>) => {
-    const video = e.currentTarget
-    const error = video.error
-
-    console.error("Video error:", {
-      code: error?.code,
-      message: error?.message,
-      src: video.src,
-      networkState: video.networkState,
-      readyState: video.readyState,
-    })
-
-    setVideoLoading(false)
-    setVideoCanPlay(false)
-
-    let errorMessage = "Video gagal dimuat."
-    if (error?.code === 4) {
-      errorMessage = "Format video tidak didukung oleh browser Anda."
-    } else if (error?.code === 3) {
-      errorMessage = "Video rusak atau tidak dapat didekode."
-    } else if (error?.code === 2) {
-      errorMessage = "Koneksi internet bermasalah."
+  const handleVideoTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+    const video = e.currentTarget;
+    if (video.currentTime / video.duration >= 0.5) {
+      setHasWatchedVideo(true);
     }
+  };
 
-    setVideoError(errorMessage)
-  }
+  const replayVideo = () => {
+    const videoElement = document.querySelector("video") as HTMLVideoElement;
+    if (videoElement) {
+      videoElement.currentTime = 0;
+      videoElement.play().catch((err) => {
+        console.warn("Replay failed:", err);
+      });
+    }
+  };
 
-  const retryVideo = () => {
-    setVideoError(null)
-    setVideoLoading(true)
-    setVideoCanPlay(false)
-
-    // Small delay to ensure DOM update
-    setTimeout(() => {
-      const videoElement = document.querySelector("video") as HTMLVideoElement
-      if (videoElement) {
-        videoElement.load()
-        setTimeout(() => {
-          videoElement.play().catch((err) => {
-            console.warn("Auto-play failed:", err)
-          })
-        }, 500)
-      }
-    }, 100)
-  }
+  const handleVideoNavigation = (index: number) => {
+    setCurrentVideoIndex(index);
+    setHasWatchedVideo(false);
+    setIsPlaying(false);
+  };
 
   const handlePreviousVideo = () => {
     if (currentVideoIndex > 0) {
-      setCurrentVideoIndex(currentVideoIndex - 1)
+      setCurrentVideoIndex(currentVideoIndex - 1);
+      setHasWatchedVideo(false);
+      setIsPlaying(false);
     }
-  }
+  };
 
   const handleNextVideo = () => {
     if (exercise && currentVideoIndex < exercise.questions.length - 1) {
-      setCurrentVideoIndex(currentVideoIndex + 1)
+      setCurrentVideoIndex(currentVideoIndex + 1);
+      setHasWatchedVideo(false);
+      setIsPlaying(false);
     }
-  }
+  };
 
   const getDifficultyColor = (level: number) => {
     const colors = [
@@ -224,45 +184,65 @@ export default function ExerciseVideoPage({ params }: { params: Promise<{ id: st
       "bg-yellow-100 text-yellow-800",
       "bg-orange-100 text-orange-800",
       "bg-red-100 text-red-800",
-    ]
-    return colors[level] || "bg-gray-100 text-gray-800"
-  }
+    ];
+    return colors[level] || "bg-gray-100 text-gray-800";
+  };
 
   const getDifficultyText = (level: number) => {
-    const labels = ["", "Sangat Mudah", "Mudah", "Sedang", "Sulit", "Sangat Sulit"]
-    return labels[level] || "Tidak Diketahui"
-  }
+    const labels = [
+      "",
+      "Sangat Mudah",
+      "Mudah",
+      "Sedang",
+      "Sulit",
+      "Sangat Sulit",
+    ];
+    return labels[level] || "Tidak Diketahui";
+  };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex justify-center items-center">
         <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-12 w-12 animate-spin text-[#3B82F6]" />
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-[#3B82F6] border-t-transparent" />
           <p className="text-muted-foreground">Memuat video latihan...</p>
         </div>
       </div>
-    )
+    );
   }
 
-  if (!exercise) {
+  if (!exercise || !exercise.questions || exercise.questions.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex justify-center items-center">
         <div className="text-center py-12">
-          <AlertCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Latihan tidak ditemukan</h3>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">Latihan yang Anda cari tidak tersedia.</p>
+          <div className="h-16 w-16 text-gray-400 mx-auto mb-4">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+              />
+            </svg>
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+            Video Tidak Tersedia
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            Exercise ini tidak memiliki video yang dapat ditonton.
+          </p>
           <Link href="/student/exercises">
             <Button className="bg-[#3B82F6] hover:bg-[#2563EB]">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Kembali ke Daftar Latihan
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Kembali ke Daftar Exercise
             </Button>
           </Link>
         </div>
       </div>
-    )
+    );
   }
 
-  const currentQuestion = exercise.questions[currentVideoIndex]
+  const currentQuestion = exercise.questions[currentVideoIndex];
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
@@ -270,7 +250,11 @@ export default function ExerciseVideoPage({ params }: { params: Promise<{ id: st
         {/* Header */}
         <div className="flex items-center gap-3 sm:gap-4">
           <Link href="/student/exercises">
-            <Button variant="outline" size="icon" className="h-8 w-8 sm:h-10 sm:w-10 bg-transparent">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8 sm:h-10 sm:w-10 bg-transparent"
+            >
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
@@ -278,11 +262,6 @@ export default function ExerciseVideoPage({ params }: { params: Promise<{ id: st
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white line-clamp-2">
               {exercise.title}
             </h1>
-          </div>
-          <div className="flex items-center gap-2">
-            <Badge className={`${getDifficultyColor(exercise.difficulty_level)} text-xs`}>
-              {getDifficultyText(exercise.difficulty_level)}
-            </Badge>
           </div>
         </div>
 
@@ -315,102 +294,153 @@ export default function ExerciseVideoPage({ params }: { params: Promise<{ id: st
           </div>
         </div>
 
-        {/* Main Content */}
         <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
           {/* Video Player */}
           <div className="lg:col-span-2">
-            <div className="bg-white dark:bg-slate-800 rounded-lg p-3 sm:p-4 shadow-sm">
-              <div className="mb-3 sm:mb-4">
-                <h2 className="font-semibold text-base sm:text-lg text-gray-900 dark:text-white mb-1">
-                  {currentQuestion.material_video.title}
-                </h2>
-              </div>
-
-              <div className="aspect-video rounded-md bg-black flex items-center justify-center relative overflow-hidden">
-                {videoLoading && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
-                    <div className="flex flex-col items-center gap-2 text-white">
-                      <Loader2 className="h-8 w-8 animate-spin" />
-                      <p className="text-sm">Memuat video...</p>
+            <Card className="shadow-sm bg-white dark:bg-slate-800">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center justify-between text-base sm:text-lg">
+                  <span className="line-clamp-2">
+                    Video {currentVideoIndex + 1}:{" "}
+                    {currentQuestion.material_video?.title}
+                  </span>
+                  {!hasWatchedVideo && (
+                    <div className="text-xs text-muted-foreground">
+                      💡 Tonton video hingga selesai
                     </div>
-                  </div>
-                )}
-
-                {videoError && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
-                    <div className="flex flex-col items-center gap-2 text-white text-center p-4">
-                      <AlertCircle className="h-8 w-8" />
-                      <p className="text-sm mb-2">{videoError}</p>
-                      <Button variant="outline" size="sm" onClick={retryVideo}>
-                        <RefreshCw className="h-4 w-4 mr-1" />
-                        Coba Lagi
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                {/* WORKING: Simplified video element like materials */}
-                <video
-                  key={currentVideoIndex} // Simple key for reload
-                  className="w-full h-full"
-                  controls
-                  playsInline
-                  onPlay={handleVideoPlay}
-                  onPause={handleVideoPause}
-                  onEnded={handleVideoEnded}
-                  onLoadStart={handleVideoLoadStart}
-                  onCanPlay={handleVideoCanPlay}
-                  onError={handleVideoError}
-                >
-                  <source src={getVideoStreamUrl(currentQuestion)} type="video/mp4" />
-                  Your browser does not support the video tag.
-                </video>
-              </div>
-
-              {currentQuestion.material_video.description && (
-                <div className="mt-3 sm:mt-4 p-3 sm:p-4 bg-gray-50 dark:bg-slate-700 rounded-md">
-                  <h4 className="font-medium mb-2 text-sm sm:text-base">Deskripsi Video</h4>
-                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                    {currentQuestion.material_video.description}
-                  </p>
+                  )}
+                  {hasWatchedVideo && (
+                    <Badge
+                      variant="secondary"
+                      className="text-green-600 ml-2 shrink-0"
+                    >
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      <span className="hidden sm:inline">Ditonton</span>
+                    </Badge>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="relative aspect-video bg-black rounded-b-lg overflow-hidden">
+                  {/* SIMPLIFIED: Video element like materials */}
+                  <video
+                    key={currentVideoIndex} // Force reload when changing videos
+                    className="w-full h-full"
+                    controls
+                    playsInline
+                    onPlay={handleVideoPlay}
+                    onPause={handleVideoPause}
+                    onEnded={handleVideoEnded}
+                    onTimeUpdate={handleVideoTimeUpdate}
+                  >
+                    <source
+                      src={getVideoStreamUrl(currentQuestion)}
+                      type="video/mp4"
+                    />
+                    <p className="text-white p-4">
+                      Browser Anda tidak mendukung pemutar video.
+                    </p>
+                  </video>
                 </div>
-              )}
-            </div>
+              </CardContent>
+              <CardContent className="pt-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={replayVideo}
+                      className="bg-transparent"
+                    >
+                      <RotateCcw className="h-4 w-4 mr-1" />
+                      Putar Ulang
+                    </Button>
+                    {isPlaying ? (
+                      <Badge variant="secondary" className="text-[#3B82F6]">
+                        <Play className="h-3 w-3 mr-1" />
+                        Sedang Diputar
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline">
+                        <Pause className="h-3 w-3 mr-1" />
+                        Dijeda
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-sm font-medium ml-3">
+                    Tingkat Kesulitan:
+                  </span>
+                  <Badge
+                    className={`${getDifficultyColor(
+                      exercise.difficulty_level
+                    )} text-xs ml-2`}
+                  >
+                    {getDifficultyText(exercise.difficulty_level)}
+                  </Badge>
+                </div>
+                {/* Video Description */}
+                {currentQuestion.material_video?.description && (
+                  <div className="p-3 bg-gray-50 dark:bg-slate-700 rounded-md">
+                    <h4 className="font-medium mb-1 text-sm">
+                      Deskripsi Video
+                    </h4>
+                    <p className="text-xs text-muted-foreground">
+                      {currentQuestion.material_video.description}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
 
-          {/* Sidebar */}
+          {/* Video List Sidebar */}
           <div className="space-y-4">
-            {/* Video List */}
-            <div className="bg-white dark:bg-slate-800 rounded-lg p-3 sm:p-4 shadow-sm">
-              <h3 className="font-semibold text-base sm:text-lg text-gray-900 dark:text-white mb-3">Daftar Video</h3>
-              <div className="space-y-2 max-h-96 overflow-y-auto">
+            <Card className="shadow-sm bg-white dark:bg-slate-800">
+              <CardHeader>
+                <CardTitle className="text-base sm:text-lg">
+                  Daftar Video ({exercise.questions.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 max-h-96 overflow-y-auto">
                 {exercise.questions.map((question, index) => (
-                  <button
+                  <div
                     key={question.id}
-                    onClick={() => setCurrentVideoIndex(index)}
-                    className={`w-full text-left p-3 rounded-md border transition-colors ${
+                    className={`p-3 rounded-md border cursor-pointer transition-colors ${
                       index === currentVideoIndex
-                        ? " text-black border-[#3B82F6] border-2 rounded-lg"
+                        ? "bg-[#3B82F6] text-white border-[#3B82F6]"
                         : "hover:bg-gray-50 dark:hover:bg-slate-700 border-gray-200 dark:border-gray-700"
                     }`}
+                    onClick={() => handleVideoNavigation(index)}
                   >
-                    <div className="font-medium text-sm">
-                      {question.order}. {question.material_video.title}
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-medium">
+                        Video {index + 1}
+                      </span>
+                      {index === currentVideoIndex && hasWatchedVideo && (
+                        <CheckCircle className="h-4 w-4 text-green-400" />
+                      )}
                     </div>
-                  </button>
+                    <p className="text-xs opacity-75 line-clamp-2">
+                      {question.material_video?.title ||
+                        `Video untuk soal ${index + 1}`}
+                    </p>
+                  </div>
                 ))}
-              </div>
+              </CardContent>
+            </Card>
+            <div className="mt-4 pt-4 border-t">
+              <Link href={`/student/exercises/${exercise.id}/practice`}>
+                <Button className="w-full bg-[#3B82F6] hover:bg-[#2563EB] h-10 sm:h-12">
+                  <Play className="w-4 h-4 mr-2" />
+                  Mulai Latihan
+                </Button>
+              </Link>
             </div>
-
-            {/* Action Button */}
-            <Link href={`/student/exercises/${exercise.id}/practice`} className="block">
-              <Button className="w-full bg-[#3B82F6] hover:bg-[#2563EB] h-12 text-sm sm:text-base">
-                Mulai Mengerjakan Latihan
-              </Button>
-            </Link>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

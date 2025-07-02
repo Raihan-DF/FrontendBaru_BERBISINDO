@@ -305,7 +305,7 @@ export default function MyProgressPage() {
             </div>
             <div className="flex-1">
               <p className="text-gray-900 text-xl font-bold mb-2">
-                {user?.name || "Siswa"}
+                {user?.name || "Pengguna"}
               </p>
               <p className="text-sm text-gray-600 font-medium">
                 {getMotivationalMessage()}

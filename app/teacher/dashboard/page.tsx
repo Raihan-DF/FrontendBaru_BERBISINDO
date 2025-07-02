@@ -497,7 +497,7 @@ export default function TeacherDashboard() {
                 </h1>
                 <p className="text-xl text-blue-100 mb-6 max-w-2xl">
                   Selamat datang di dashboard pembelajaran bahasa isyarat. Mari
-                  ciptakan pengalaman belajar yang luar biasa untuk siswa Anda!
+                  ciptakan pengalaman belajar yang luar biasa!
                 </p>
               </div>
 
@@ -605,7 +605,7 @@ export default function TeacherDashboard() {
               <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-10 translate-x-10"></div>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-orange-100">
-                  Total Siswa
+                  Total Pengguna
                 </CardTitle>
                 <div className="p-2 bg-white/20 rounded-lg">
                   <Users className="h-5 w-5" />
@@ -740,7 +740,7 @@ export default function TeacherDashboard() {
                       </h3>
                       <p className="text-sm text-muted-foreground mb-4">
                         Anda belum membuat materi pembelajaran. Mulai buat
-                        materi sekarang untuk membantu siswa belajar.
+                        materi sekarang untuk membantu pengguna belajar.
                       </p>
                       <Link href="/teacher/materials/create">
                         <Button>
@@ -815,8 +815,7 @@ export default function TeacherDashboard() {
                         Belum ada latihan
                       </h3>
                       <p className="text-sm text-muted-foreground mb-4">
-                        Anda belum membuat latihan. Buat latihan untuk membantu
-                        siswa berlatih.
+                        Anda belum membuat latihan. Buat latihan!.
                       </p>
                       <Link href="/teacher/exercises/create">
                         <Button>
@@ -906,7 +905,7 @@ export default function TeacherDashboard() {
                       </h3>
                       <p className="text-sm text-muted-foreground mb-4">
                         Anda belum membuat quiz. Buat quiz untuk menguji
-                        pemahaman siswa.
+                        pemahaman Materi.
                       </p>
                       <Link href="/teacher/quizzes/create">
                         <Button>
@@ -930,15 +929,15 @@ export default function TeacherDashboard() {
                     <Users className="h-5 w-5" />
                   </div>
                   <div>
-                    <CardTitle className="text-xl">Siswa Terbaru</CardTitle>
+                    <CardTitle className="text-xl">Pengguna Terbaru</CardTitle>
                     <CardDescription>
-                      Pantau progress siswa Anda
+                      Pantau progress Pengguna
                     </CardDescription>
                   </div>
                 </div>
                 <Link href="/teacher/students/progress">
                   <Button variant="outline" size="sm">
-                    Lihat Semua Siswa
+                    Lihat Semua Pengguna
                   </Button>
                 </Link>
               </div>
@@ -999,9 +998,9 @@ export default function TeacherDashboard() {
               ) : (
                 <div className="text-center py-8">
                   <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-medium mb-2">Belum ada siswa</h3>
+                  <h3 className="text-lg font-medium mb-2">Belum ada pengguna</h3>
                   <p className="text-sm text-muted-foreground">
-                    Belum ada siswa yang terdaftar untuk kelas Anda.
+                    Belum ada pengguna yang terdaftar untuk kelas Anda.
                   </p>
                 </div>
               )}

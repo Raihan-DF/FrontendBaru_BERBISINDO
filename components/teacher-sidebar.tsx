@@ -43,7 +43,7 @@ export function TeacherSidebar() {
       icon: GraduationCap,
     },
     {
-      title: "Pemantauan Siswa",
+      title: "Pemantauan Pengguna",
       href: "/teacher/students/progress",
       icon: Users,
     },

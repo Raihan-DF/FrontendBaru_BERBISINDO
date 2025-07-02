@@ -6,7 +6,7 @@ import { useState, useEffect, use } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, ChevronLeft, ChevronRight, Loader2, AlertCircle, RefreshCw, Zap } from "lucide-react"
+import { ArrowLeft, ChevronLeft, ChevronRight, Loader2, AlertCircle, RefreshCw } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
 import { useApi } from "@/hooks/use-api"
@@ -59,6 +59,7 @@ export default function ExerciseVideoPage({ params }: { params: Promise<{ id: st
   const [videoLoading, setVideoLoading] = useState(true)
   const [videoError, setVideoError] = useState<string | null>(null)
   const [videoCanPlay, setVideoCanPlay] = useState(false)
+  const [videoKey, setVideoKey] = useState(0) // Force video reload
   const { get, post, put, delete: del, buildUrl } = useApi()
 
   useEffect(() => {
@@ -70,6 +71,7 @@ export default function ExerciseVideoPage({ params }: { params: Promise<{ id: st
     setVideoLoading(true)
     setVideoError(null)
     setVideoCanPlay(false)
+    setVideoKey((prev) => prev + 1) // Force video reload
   }, [currentVideoIndex])
 
   const fetchExercise = async () => {
@@ -175,16 +177,20 @@ export default function ExerciseVideoPage({ params }: { params: Promise<{ id: st
     setVideoError(null)
     setVideoLoading(true)
     setVideoCanPlay(false)
+    setVideoKey((prev) => prev + 1) // Force complete reload
 
-    const videoElement = document.querySelector("video") as HTMLVideoElement
-    if (videoElement) {
-      videoElement.load()
-      setTimeout(() => {
-        videoElement.play().catch((err) => {
-          console.warn("Auto-play failed:", err)
-        })
-      }, 500)
-    }
+    // Small delay to ensure DOM update
+    setTimeout(() => {
+      const videoElement = document.querySelector("video") as HTMLVideoElement
+      if (videoElement) {
+        videoElement.load()
+        setTimeout(() => {
+          videoElement.play().catch((err) => {
+            console.warn("Auto-play failed:", err)
+          })
+        }, 500)
+      }
+    }, 100)
   }
 
   const handlePreviousVideo = () => {
@@ -253,7 +259,7 @@ export default function ExerciseVideoPage({ params }: { params: Promise<{ id: st
         {/* Header */}
         <div className="flex items-center gap-3 sm:gap-4">
           <Link href="/student/exercises">
-            <Button variant="outline" size="icon" className="h-8 w-8 sm:h-10 sm:w-10">
+            <Button variant="outline" size="icon" className="h-8 w-8 sm:h-10 sm:w-10 bg-transparent">
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
@@ -286,7 +292,7 @@ export default function ExerciseVideoPage({ params }: { params: Promise<{ id: st
               size="sm"
               onClick={handlePreviousVideo}
               disabled={currentVideoIndex === 0}
-              className="h-8 px-2 sm:px-3"
+              className="h-8 px-2 sm:px-3 bg-transparent"
             >
               <ChevronLeft className="h-4 w-4" />
               <span className="hidden sm:inline ml-1">Sebelumnya</span>
@@ -296,7 +302,7 @@ export default function ExerciseVideoPage({ params }: { params: Promise<{ id: st
               size="sm"
               onClick={handleNextVideo}
               disabled={currentVideoIndex === exercise.questions.length - 1}
-              className="h-8 px-2 sm:px-3"
+              className="h-8 px-2 sm:px-3 bg-transparent"
             >
               <span className="hidden sm:inline mr-1">Berikutnya</span>
               <ChevronRight className="h-4 w-4" />
@@ -340,12 +346,16 @@ export default function ExerciseVideoPage({ params }: { params: Promise<{ id: st
 
                 {/* IMPROVED: Better video element for iOS compatibility */}
                 <video
-                  key={`${currentQuestion.id}-${currentQuestion.material_video.id}`}
+                  key={`${videoKey}-${currentQuestion.id}-${currentQuestion.material_video.id}`}
                   className="w-full h-full object-contain"
                   controls
                   preload="metadata"
                   playsInline // Important for iOS
                   webkit-playsinline="true" // Legacy iOS support
+                  muted // Helps with autoplay policies
+                  x5-video-player-type="h5" // WeChat browser support
+                  x5-video-player-fullscreen="true" // WeChat fullscreen
+                  x5-video-orientation="portraint" // WeChat orientation
                   onLoadStart={handleVideoLoadStart}
                   onCanPlay={handleVideoCanPlay}
                   onError={handleVideoError}
@@ -399,7 +409,6 @@ export default function ExerciseVideoPage({ params }: { params: Promise<{ id: st
                 Mulai Mengerjakan Latihan
               </Button>
             </Link>
-
           </div>
         </div>
       </div>

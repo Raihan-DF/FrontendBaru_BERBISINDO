@@ -132,7 +132,7 @@ export default function Home() {
                 <Users className="h-12 w-12 text-primary" />
                 <h3 className="text-xl font-bold">Pemantauan Kemajuan</h3>
                 <p className="text-center text-muted-foreground">
-                  Pantau kemajuan belajar siswa dengan detail dan terukur
+                  Pantau kemajuan belajar dengan detail dan terukur
                 </p>
               </div>
             </div>

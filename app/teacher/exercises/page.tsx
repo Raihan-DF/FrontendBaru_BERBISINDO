@@ -155,7 +155,7 @@ export default function TeacherExercises() {
           <div className="flex flex-col gap-2">
             <h1 className="text-3xl font-bold tracking-tight">Latihan</h1>
             <p className="text-muted-foreground">
-              Kelola latihan bahasa isyarat untuk siswa Anda.
+              Kelola latihan bahasa isyarat untuk pengguna.
             </p>
           </div>
 

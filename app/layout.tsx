@@ -14,7 +14,7 @@ export default function RootLayout({
     <html lang="id" suppressHydrationWarning>
       <head>
         <title>BISINDO - Platform Belajar Bahasa Isyarat Indonesia</title>
-        <meta name="description" content="Platform pembelajaran bahasa isyarat Indonesia untuk guru dan siswa" />
+        <meta name="description" content="Platform pembelajaran bahasa isyarat Indonesia yang membuat mudah dalam belajar bahasa isyarat" />
       </head>
       <body className={cn("min-h-screen bg-background font-sans antialiased")}>
         <AuthProvider> {/* Menambahkan AuthProvider di sini */}

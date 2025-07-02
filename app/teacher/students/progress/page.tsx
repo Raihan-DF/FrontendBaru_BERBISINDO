@@ -244,7 +244,7 @@ export default function StudentsProgressPage() {
                   <div className="absolute inset-0 w-16 h-16 border-4 border-transparent rounded-full animate-ping border-t-blue-400"></div>
                 </div>
                 <p className="text-blue-600 font-medium">
-                  Memuat data progress siswa...
+                  Memuat data progress pengguna...
                 </p>
               </div>
             </div>
@@ -310,10 +310,10 @@ export default function StudentsProgressPage() {
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">
                   {" "}
-                  Progress Siswa
+                  Progress Pengguna
                 </h1>
                 <p className="text-gray-600 mt-1">
-                  Pemantauan perjalanan belajar siswa Anda
+                  Pemantauan perjalanan belajar pengguna
                 </p>
                 {user && (
                   <div className="flex items-center gap-2 mt-2">
@@ -342,7 +342,7 @@ export default function StudentsProgressPage() {
           <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white border-0">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-blue-100">
-                Total Siswa
+                Total Pengguna
               </CardTitle>
               <Users className="h-5 w-5 text-blue-200" />
             </CardHeader>
@@ -409,9 +409,9 @@ export default function StudentsProgressPage() {
                 <Users className="h-5 w-5 text-gray-600" />
               </div>
               <div>
-                <CardTitle className="text-xl">List Siswa</CardTitle>
+                <CardTitle className="text-xl">List Pengguna</CardTitle>
                 <CardDescription>
-                  Melihat dan mengelola kemajuan siswa secara individu
+                  Melihat dan mengelola kemajuan pengguna secara individu
                 </CardDescription>
               </div>
             </div>
@@ -493,7 +493,7 @@ export default function StudentsProgressPage() {
                 <div className="flex flex-col items-center">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
                   <p className="mt-4 text-gray-600 font-medium">
-                    Loading progress siswa...
+                    Loading progress...
                   </p>
                 </div>
               </div>

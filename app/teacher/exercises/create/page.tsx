@@ -357,7 +357,7 @@ export default function CreateExercise() {
                 Buat Latihan Baru
               </h1>
               <p className="text-muted-foreground">
-                Buat latihan bahasa isyarat untuk siswa Anda.
+                Buat latihan bahasa isyarat untuk pengguna.
               </p>
             </div>
           </div>

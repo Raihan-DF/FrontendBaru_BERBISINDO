@@ -187,7 +187,7 @@ export default function TeacherMaterials() {
               Materi Pembelajaran
             </h1>
             <p className="text-muted-foreground">
-              Kelola materi pembelajaran bahasa isyarat untuk siswa Anda.
+              Kelola materi pembelajaran bahasa isyarat untuk pengguna.
             </p>
           </div>
 

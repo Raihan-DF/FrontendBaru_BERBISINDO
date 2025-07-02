@@ -176,7 +176,7 @@ export default function TeacherQuizzes() {
           <div className="flex flex-col gap-2">
             <h1 className="text-3xl font-bold tracking-tight">Quiz & Test</h1>
             <p className="text-muted-foreground">
-              Kelola quiz dan test bahasa isyarat untuk siswa Anda.
+              Kelola quiz dan test bahasa isyarat untuk pengguna.
             </p>
           </div>
 

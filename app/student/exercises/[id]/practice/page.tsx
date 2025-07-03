@@ -26,7 +26,6 @@ import {
   Trophy,
   Target,
   Award,
-  Zap,
 } from "lucide-react"
 
 interface ExerciseOption {
@@ -298,7 +297,6 @@ export default function ExercisePracticePage() {
   const handleVideoError = (e: React.SyntheticEvent<HTMLVideoElement>) => {
     const video = e.currentTarget
     const error = video.error
-
     console.error("Video error:", {
       code: error?.code,
       message: error?.message,
@@ -392,7 +390,7 @@ export default function ExercisePracticePage() {
         title: "Tonton Video Terlebih Dahulu",
         description: "Disarankan untuk menonton video sebelum menjawab soal.",
         variant: "default",
-        duration:1000,
+        duration: 1000,
       })
     }
 
@@ -645,7 +643,7 @@ export default function ExercisePracticePage() {
         <div className="container mx-auto py-4 px-3 sm:py-6 sm:px-4 space-y-4 sm:space-y-6 max-w-4xl">
           <div className="flex items-center gap-3 sm:gap-4">
             <Link href="/student/exercises">
-              <Button variant="outline" size="icon" className="h-8 w-8 sm:h-10 sm:w-10">
+              <Button variant="outline" size="icon" className="h-8 w-8 sm:h-10 sm:w-10 bg-transparent">
                 <ArrowLeft className="h-4 w-4" />
               </Button>
             </Link>
@@ -724,13 +722,13 @@ export default function ExercisePracticePage() {
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
               <Link href="/student/exercises">
-                <Button variant="outline" className="w-full sm:w-auto">
+                <Button variant="outline" className="w-full sm:w-auto bg-transparent">
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Kembali ke Daftar Latihan
                 </Button>
               </Link>
               <Link href={`/student/exercises/${exercise.id}/video`}>
-                <Button variant="outline" className="w-full sm:w-auto">
+                <Button variant="outline" className="w-full sm:w-auto bg-transparent">
                   <Eye className="mr-2 h-4 w-4" />
                   Tonton Video Lagi
                 </Button>
@@ -752,7 +750,7 @@ export default function ExercisePracticePage() {
         {/* Header */}
         <div className="flex items-center gap-3 sm:gap-4 mb-3">
           <Link href="/student/exercises">
-            <Button variant="outline" size="icon" className="h-8 w-8 sm:h-10 sm:w-10">
+            <Button variant="outline" size="icon" className="h-8 w-8 sm:h-10 sm:w-10 bg-transparent">
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
@@ -766,7 +764,7 @@ export default function ExercisePracticePage() {
               {getDifficultyText(exercise.difficulty_level)}
             </Badge>
             <Link href={`/student/exercises/${exercise.id}/video`}>
-              <Button variant="outline" size="sm" className="hidden sm:flex">
+              <Button variant="outline" size="sm" className="hidden sm:flex bg-transparent">
                 <Eye className="mr-2 h-4 w-4" />
                 Lihat Semua Video
               </Button>
@@ -814,9 +812,10 @@ export default function ExercisePracticePage() {
                   </Badge>
                 )}
               </div>
+
               {!hasWatchedVideo && (
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">💡 Tonton video hingga selesai</div>
-                )}
+                <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">💡 Tonton video hingga selesai</div>
+              )}
 
               <div className="aspect-video rounded-md bg-black flex items-center justify-center relative overflow-hidden">
                 {videoLoading && (
@@ -896,7 +895,7 @@ export default function ExercisePracticePage() {
 
               {/* Question Text */}
               <div className="p-3 sm:p-4 bg-gray-50 dark:bg-slate-700 rounded-md mb-4">
-                <p className="text-sm sm:text-base font-medium text-gray-900 dark:text-white">
+                <p className="text-lg sm:text-base font-medium text-gray-900 dark:text-white">
                   {currentQuestion.question}
                 </p>
               </div>
@@ -932,9 +931,7 @@ export default function ExercisePracticePage() {
                         Mengirim...
                       </>
                     ) : (
-                      <>
-                        Kirim Jawaban
-                      </>
+                      <>Kirim Jawaban</>
                     )}
                   </Button>
 

@@ -297,77 +297,62 @@ export default function ExerciseVideoPage() {
         <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
           {/* Video Player */}
           <div className="lg:col-span-2">
-            <Card className="shadow-sm bg-white dark:bg-slate-800">
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center justify-between text-base sm:text-sm">
-                  {!hasWatchedVideo && (
-                    <div className="text-xs text-muted-foreground">
-                      💡 Tonton video hingga selesai
-                    </div>
-                  )}
-                  {hasWatchedVideo && (
-                    <Badge
-                      variant="secondary"
-                      className="text-green-600 ml-2 shrink-0"
-                    >
-                      <CheckCircle className="h-3 w-3 mr-1" />
-                      <span className="hidden sm:inline">Ditonton</span>
-                    </Badge>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="relative aspect-video bg-black rounded-b-lg overflow-hidden">
-                  {/* SIMPLIFIED: Video element like materials */}
-                  <video
-                    key={currentVideoIndex} // Force reload when changing videos
-                    className="w-full h-full"
-                    controls
-                    playsInline
-                    onPlay={handleVideoPlay}
-                    onPause={handleVideoPause}
-                    onEnded={handleVideoEnded}
-                    onTimeUpdate={handleVideoTimeUpdate}
-                  >
-                    <source
-                      src={getVideoStreamUrl(currentQuestion)}
-                      type="video/mp4"
-                    />
-                    <p className="text-white p-4">
-                      Browser Anda tidak mendukung pemutar video.
-                    </p>
-                  </video>
-                </div>
-              </CardContent>
-              <CardContent className="pt-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={replayVideo}
-                      className="bg-transparent"
-                    >
-                      <RotateCcw className="h-4 w-4 mr-1" />
-                      Putar Ulang
-                    </Button>
-                    {isPlaying ? (
-                      <Badge variant="secondary" className="text-[#3B82F6]">
-                        <Play className="h-3 w-3 mr-1" />
-                        Sedang Diputar
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline">
-                        <Pause className="h-3 w-3 mr-1" />
-                        Dijeda
-                      </Badge>
-                    )}
+            <Card className="shadow-sm bg-white dark:bg-slate-800 rounded-lg overflow-hidden">
+              {/* Header */}
+              <div className="p-3 sm:p-4 flex items-center justify-between">
+                {!hasWatchedVideo && (
+                  <div className="text-xs text-muted-foreground">
+                    💡 Tonton video hingga selesai
                   </div>
+                )}
+                {hasWatchedVideo && (
+                  <Badge className="bg-green-100 text-green-800 text-xs font-medium">
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                    Ditonton
+                  </Badge>
+                )}
+              </div>
+
+              {/* Video */}
+              <div className="relative aspect-video bg-black">
+                <video
+                  key={currentVideoIndex}
+                  className="w-full h-full"
+                  controls
+                  playsInline
+                  onPlay={handleVideoPlay}
+                  onPause={handleVideoPause}
+                  onEnded={handleVideoEnded}
+                  onTimeUpdate={handleVideoTimeUpdate}
+                >
+                  <source
+                    src={getVideoStreamUrl(currentQuestion)}
+                    type="video/mp4"
+                  />
+                  <p className="text-white p-4">
+                    Browser Anda tidak mendukung pemutar video.
+                  </p>
+                </video>
+              </div>
+
+              {/* Konten bawah video */}
+              <div className="p-3 sm:p-4 space-y-4">
+                {/* Kontrol Video */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={replayVideo}
+                    className="bg-transparent"
+                  >
+                    <RotateCcw className="h-4 w-4 mr-1" />
+                    Putar Ulang
+                  </Button>
                 </div>
-                <div>
-                  <span className="text-sm font-medium ml-3">
-                    Tingkat Kesulitan:
-                  </span>
+
+                {/* Tingkat Kesulitan */}
+                <div className="flex items-center text-sm font-medium text-gray-800 dark:text-white">
+                  <span className="ml-2">Tingkat Kesulitan:</span>
                   <Badge
                     className={`${getDifficultyColor(
                       exercise.difficulty_level
@@ -376,10 +361,11 @@ export default function ExerciseVideoPage() {
                     {getDifficultyText(exercise.difficulty_level)}
                   </Badge>
                 </div>
-                {/* Video Description */}
+
+                {/* Deskripsi Video */}
                 {currentQuestion.material_video?.description && (
-                  <div className="p-3 bg-gray-50 dark:bg-slate-700 rounded-md">
-                    <h4 className="font-medium mb-1 text-sm">
+                  <div className="bg-gray-50 dark:bg-slate-700 rounded-md p-3">
+                    <h4 className="font-medium mb-1 text-sm text-gray-900 dark:text-white">
                       Deskripsi Video
                     </h4>
                     <p className="text-xs text-muted-foreground">
@@ -387,7 +373,7 @@ export default function ExerciseVideoPage() {
                     </p>
                   </div>
                 )}
-              </CardContent>
+              </div>
             </Card>
           </div>
 

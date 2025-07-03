@@ -1014,40 +1014,38 @@ export default function QuizAttemptPage({
             </RadioGroup>
 
             {/* Navigation Buttons */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-3 px-3 sm:px-0">
+              {/* Tombol Sebelumnya */}
               <Button
                 variant="outline"
                 onClick={handlePreviousQuestion}
                 disabled={currentQuestionIndex === 0}
-                className="h-9 sm:h-10"
+                className="h-9 sm:h-10 w-full sm:w-auto"
               >
                 <ChevronLeft className="h-4 w-4 mr-2" />
                 Sebelumnya
               </Button>
 
-              <div className="flex gap-2">
-                {currentQuestionIndex === quiz.questions.length - 1 ? (
-                  <Button
-                    onClick={() => handleSubmitQuiz()}
-                    disabled={isSubmitting}
-                    className="bg-[#8B5CF6] hover:bg-[#7C3AED] text-white h-9 sm:h-10 px-6 sm:px-8"
-                  >
-                    <Send className="h-4 w-4 mr-2" />
-                    {isSubmitting ? "Mengirim..." : "Kirim Quiz"}
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={handleNextQuestion}
-                    disabled={
-                      currentQuestionIndex === quiz.questions.length - 1
-                    }
-                    className="h-9 sm:h-10"
-                  >
-                    Berikutnya
-                    <ChevronRight className="h-4 w-4 ml-2" />
-                  </Button>
-                )}
-              </div>
+              {/* Tombol Berikutnya / Kirim */}
+              {currentQuestionIndex === quiz.questions.length - 1 ? (
+                <Button
+                  onClick={() => handleSubmitQuiz()}
+                  disabled={isSubmitting}
+                  className="bg-[#8B5CF6] hover:bg-[#7C3AED] text-white h-9 sm:h-10 w-full sm:w-auto px-6 sm:px-8"
+                >
+                  <Send className="h-4 w-4 mr-2" />
+                  {isSubmitting ? "Mengirim..." : "Kirim Quiz"}
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleNextQuestion}
+                  disabled={currentQuestionIndex === quiz.questions.length - 1}
+                  className="h-9 sm:h-10 w-full sm:w-auto"
+                >
+                  Berikutnya
+                  <ChevronRight className="h-4 w-4 ml-2" />
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>

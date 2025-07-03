@@ -300,10 +300,6 @@ export default function ExerciseVideoPage() {
             <Card className="shadow-sm bg-white dark:bg-slate-800">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center justify-between text-base sm:text-sm">
-                  <span className="line-clamp-2">
-                    Video {currentVideoIndex + 1}:{" "}
-                    {currentQuestion.material_video?.title}
-                  </span>
                   {!hasWatchedVideo && (
                     <div className="text-xs text-muted-foreground">
                       💡 Tonton video hingga selesai
@@ -407,7 +403,7 @@ export default function ExerciseVideoPage() {
                 {exercise.questions.map((question, index) => (
                   <div
                     key={question.id}
-                    className={`p-3 rounded-md border cursor-pointer transition-colors ${
+                    className={`p-3 rounded-md border cursor-pointer transition-colors text-sm ${
                       index === currentVideoIndex
                         ? "bg-[#3B82F6] text-white border-[#3B82F6]"
                         : "hover:bg-gray-50 dark:hover:bg-slate-700 border-gray-200 dark:border-gray-700"

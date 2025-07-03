@@ -299,7 +299,7 @@ export default function ExerciseVideoPage() {
           <div className="lg:col-span-2">
             <Card className="shadow-sm bg-white dark:bg-slate-800">
               <CardHeader className="pb-3">
-                <CardTitle className="flex items-center justify-between text-base sm:text-lg">
+                <CardTitle className="flex items-center justify-between text-base sm:text-sm">
                   <span className="line-clamp-2">
                     Video {currentVideoIndex + 1}:{" "}
                     {currentQuestion.material_video?.title}
@@ -415,9 +415,6 @@ export default function ExerciseVideoPage() {
                     onClick={() => handleVideoNavigation(index)}
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-medium">
-                        Video {index + 1}
-                      </span>
                       {index === currentVideoIndex && hasWatchedVideo && (
                         <CheckCircle className="h-4 w-4 text-green-400" />
                       )}

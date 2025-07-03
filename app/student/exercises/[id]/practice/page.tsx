@@ -20,7 +20,6 @@ import {
   Clock,
   Play,
   Pause,
-  RefreshCw,
   Loader2,
   AlertCircle,
   Trophy,
@@ -143,12 +142,9 @@ export default function ExercisePracticePage() {
   const [startTime, setStartTime] = useState<Date | null>(null)
   const [elapsedTime, setElapsedTime] = useState(0)
 
-  // Video states - IMPROVED for iOS compatibility
-  const [videoLoading, setVideoLoading] = useState(true)
-  const [videoError, setVideoError] = useState<string | null>(null)
+  // Video states - SIMPLIFIED like materials
   const [isVideoPlaying, setIsVideoPlaying] = useState(false)
   const [hasWatchedVideo, setHasWatchedVideo] = useState(false)
-  const [videoCanPlay, setVideoCanPlay] = useState(false)
 
   // Progress tracking state
   const [isNewAttempt, setIsNewAttempt] = useState(false)
@@ -171,13 +167,10 @@ export default function ExercisePracticePage() {
     }
   }, [startTime, showFinalResults])
 
-  // Reset video states when question changes
+  // Reset video states when question changes - SIMPLIFIED
   useEffect(() => {
-    setVideoLoading(true)
-    setVideoError(null)
     setHasWatchedVideo(false)
     setIsVideoPlaying(false)
-    setVideoCanPlay(false)
   }, [currentQuestionIndex])
 
   const fetchExercise = async () => {
@@ -264,6 +257,7 @@ export default function ExercisePracticePage() {
             title: "Latihan Sudah Pernah Diselesaikan",
             description: "Anda dapat mengulang exercise ini.",
             variant: "default",
+            duration:1000,
           })
         } else if (progressData.answered_questions > 0 && !progressData.is_completed) {
           const nextQuestionIndex = progressData.current_question_index ?? progressData.answered_questions
@@ -288,70 +282,12 @@ export default function ExercisePracticePage() {
     }
   }
 
-  // IMPROVED: Better video URL handling for iOS
+  // SIMPLIFIED: Video URL handling like materials
   const getVideoStreamUrl = (question: ExerciseQuestion) => {
     return buildUrl(`/exercise-video/${exercise?.id}/${question.id}`)
   }
 
-  // IMPROVED: Better error handling for iOS
-  const handleVideoError = (e: React.SyntheticEvent<HTMLVideoElement>) => {
-    const video = e.currentTarget
-    const error = video.error
-    console.error("Video error:", {
-      code: error?.code,
-      message: error?.message,
-      src: video.src,
-      networkState: video.networkState,
-      readyState: video.readyState,
-    })
-
-    setVideoLoading(false)
-    setVideoCanPlay(false)
-
-    // More specific error messages
-    let errorMessage = "Video gagal dimuat."
-    if (error?.code === 4) {
-      errorMessage = "Format video tidak didukung oleh browser Anda."
-    } else if (error?.code === 3) {
-      errorMessage = "Video rusak atau tidak dapat didekode."
-    } else if (error?.code === 2) {
-      errorMessage = "Koneksi internet bermasalah."
-    }
-
-    setVideoError(errorMessage)
-  }
-
-  // IMPROVED: Better retry mechanism
-  const retryVideo = () => {
-    setVideoError(null)
-    setVideoLoading(true)
-    setVideoCanPlay(false)
-
-    const videoElement = document.querySelector("video") as HTMLVideoElement
-    if (videoElement) {
-      // Force reload for iOS
-      videoElement.load()
-      // Try to play after a short delay
-      setTimeout(() => {
-        videoElement.play().catch((err) => {
-          console.warn("Auto-play failed:", err)
-        })
-      }, 500)
-    }
-  }
-
-  const handleVideoLoadStart = () => {
-    console.log("Video loading started")
-    setVideoLoading(true)
-    setVideoCanPlay(false)
-  }
-
-  const handleVideoCanPlay = () => {
-    console.log("Video can play")
-    setVideoLoading(false)
-    setVideoCanPlay(true)
-  }
-
+  // SIMPLIFIED: Video event handlers like materials
   const handleVideoPlay = () => {
     setIsVideoPlaying(true)
   }
@@ -818,45 +754,16 @@ export default function ExercisePracticePage() {
               )}
 
               <div className="aspect-video rounded-md bg-black flex items-center justify-center relative overflow-hidden">
-                {videoLoading && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
-                    <div className="flex flex-col items-center gap-2 text-white">
-                      <Loader2 className="h-8 w-8 animate-spin" />
-                      <p className="text-sm">Memuat video...</p>
-                    </div>
-                  </div>
-                )}
-
-                {videoError && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
-                    <div className="flex flex-col items-center gap-2 text-white text-center p-4">
-                      <AlertCircle className="h-8 w-8" />
-                      <p className="text-sm mb-2">{videoError}</p>
-                      <Button variant="outline" size="sm" onClick={retryVideo}>
-                        <RefreshCw className="h-4 w-4 mr-1" />
-                        Coba Lagi
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                {/* IMPROVED: Better video element for iOS compatibility */}
+                {/* SIMPLIFIED: Video element like materials */}
                 <video
-                  key={`${currentQuestion.id}-${currentQuestion.material_video.id}`}
-                  className="w-full h-full object-contain"
+                  key={currentQuestionIndex} // Force reload when changing videos
+                  className="w-full h-full"
                   controls
-                  preload="metadata"
-                  playsInline // Important for iOS
-                  webkit-playsinline="true" // Legacy iOS support
-                  onLoadStart={handleVideoLoadStart}
-                  onCanPlay={handleVideoCanPlay}
-                  onError={handleVideoError}
+                  playsInline
                   onPlay={handleVideoPlay}
                   onPause={handleVideoPause}
                   onEnded={handleVideoEnded}
                   onTimeUpdate={handleVideoTimeUpdate}
-                  crossOrigin="anonymous"
-                  style={{ backgroundColor: "#000" }}
                 >
                   <source src={getVideoStreamUrl(currentQuestion)} type="video/mp4" />
                   <p className="text-white p-4">Browser Anda tidak mendukung pemutar video.</p>
@@ -866,8 +773,8 @@ export default function ExercisePracticePage() {
               {/* Video Controls */}
               <div className="flex items-center justify-between mt-3">
                 <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" onClick={replayVideo} disabled={!videoCanPlay}>
-                    <RefreshCw className="h-4 w-4 mr-1" />
+                  <Button variant="outline" size="sm" onClick={replayVideo}>
+                    <RotateCcw className="h-4 w-4 mr-1" />
                     Putar Ulang
                   </Button>
                   {isVideoPlaying ? (

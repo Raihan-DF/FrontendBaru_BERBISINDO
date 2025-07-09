@@ -150,10 +150,10 @@ export function UserNav() {
           <span>Profil</span>
         </DropdownMenuItem>
 
-        <DropdownMenuItem onClick={handleSettingsRedirect}>
+        {/* <DropdownMenuItem onClick={handleSettingsRedirect}>
           <Settings className="mr-2 h-4 w-4" />
           <span>Pengaturan</span>
-        </DropdownMenuItem>
+        </DropdownMenuItem> */}
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout}>
           <LogOut className="mr-2 h-4 w-4" />

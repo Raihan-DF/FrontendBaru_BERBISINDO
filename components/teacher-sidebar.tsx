@@ -47,11 +47,11 @@ export function TeacherSidebar() {
       href: "/teacher/students/progress",
       icon: Users,
     },
-    {
-      title: "Pengaturan",
-      href: "/teacher/settings",
-      icon: Settings,
-    },
+    // {
+    //   title: "Pengaturan",
+    //   href: "/teacher/settings",
+    //   icon: Settings,
+    // },
   ]
 
   const handleLogout = async () => {

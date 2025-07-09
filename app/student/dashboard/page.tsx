@@ -707,7 +707,7 @@ export default function StudentDashboard() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-orange-100 text-sm">Nilai Keseluruhan</p>
+                  <p className="text-orange-100 text-sm">Progress Keseluruhan</p>
                   <p className="text-2xl font-bold">
                     {Math.round(
                       ((stats?.exercises.average_score || 0) +

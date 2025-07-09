@@ -180,7 +180,7 @@ export default function RegisterPage() {
       <div className="flex min-h-screen items-center justify-center p-4 pt-20 md:pt-4">
         <Card className="w-full max-w-md">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold">Daftar Akun</CardTitle>
+            <CardTitle className="text-2xl font-bold">Daftar Akun Anda</CardTitle>
             <CardDescription>Buat akun baru untuk mulai belajar bahasa isyarat</CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit}>
@@ -267,7 +267,7 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <Label>Daftar Sebagai</Label>
                 <RadioGroup value={role} onValueChange={setRole} className="flex gap-6" disabled={isLoading}>
                   <div className="flex items-center space-x-2">
@@ -283,7 +283,7 @@ export default function RegisterPage() {
                     </Label>
                   </div>
                 </RadioGroup>
-              </div>
+              </div> */}
             </CardContent>
 
             <CardFooter className="flex flex-col space-y-4">

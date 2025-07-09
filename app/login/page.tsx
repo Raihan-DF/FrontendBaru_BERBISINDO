@@ -23,7 +23,6 @@ import { useAuth } from "@/context/AuthContext";
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [formData, setFormData] = useState({
@@ -41,6 +40,32 @@ export default function LoginPage() {
     }
   }, [isAuthenticated, userRole, loading]);
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateForm()) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const result = await loginUser({
+        email: formData.email,
+        password: formData.password,
+        rememberMe,
+      });
+
+      console.log("Login successful, user role:", result.role);
+
+      // Redirect berdasarkan role
+      redirectBasedOnRole(result.role);
+    } catch (error: any) {
+      console.error("Login error:", error);
+      setError(error.message || "Login gagal. Silakan coba lagi.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
   const redirectBasedOnRole = (role: string) => {
     switch (role) {
       case "student":
@@ -83,32 +108,6 @@ export default function LoginPage() {
     return true;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!validateForm()) return;
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const result = await loginUser({
-        email: formData.email,
-        password: formData.password,
-        rememberMe,
-      });
-
-      console.log("Login successful, user role:", result.role);
-
-      // Redirect berdasarkan role
-      redirectBasedOnRole(result.role);
-    } catch (error: any) {
-      console.error("Login error:", error);
-      setError(error.message || "Login gagal. Silakan coba lagi.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   // Show loading spinner if auth is still loading
   if (loading) {
@@ -158,6 +157,7 @@ export default function LoginPage() {
 
             <div className="space-y-2">
               <div className="relative">
+                <Label htmlFor="password">Password</Label>
                 <Input
                   id="password"
                   name="password"

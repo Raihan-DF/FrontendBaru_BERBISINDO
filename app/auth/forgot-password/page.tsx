@@ -137,13 +137,13 @@ export default function ForgotPasswordPage() {
           <div className="mt-6 text-center space-y-2">
             <p className="text-sm text-gray-600">
               Ingat password Anda?{" "}
-              <Link href="/auth/login" className="text-blue-600 hover:underline font-medium">
+              <Link href="/login" className="text-blue-600 hover:underline font-medium">
                 Kembali ke Login
               </Link>
             </p>
             <p className="text-sm text-gray-600">
               Belum punya akun?{" "}
-              <Link href="/auth/register" className="text-blue-600 hover:underline font-medium">
+              <Link href="/register" className="text-blue-600 hover:underline font-medium">
                 Daftar di sini
               </Link>
             </p>

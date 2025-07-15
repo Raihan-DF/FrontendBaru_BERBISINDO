@@ -91,16 +91,6 @@ interface StudentProgress {
   is_completed?: boolean;
 }
 
-interface Teacher {
-  id: number;
-  name: string;
-  email: string;
-  avatar?: string;
-  materials_count?: number;
-  exercises_count?: number;
-  quizzes_count?: number;
-}
-
 interface RecentActivity {
   id: number;
   type: string;
@@ -132,7 +122,6 @@ interface DashboardStats {
     percentage: number;
     items: Quiz[];
   };
-  teachers: Teacher[];
   recent_activities: RecentActivity[];
 }
 
@@ -164,8 +153,6 @@ export default function StudentDashboard() {
         router.push("/login");
         return;
       }
-
-      // Fetch materials
       const materialsResponse = await fetch(buildUrl("/api/materials"), {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -223,7 +210,6 @@ export default function StudentDashboard() {
         );
       }
 
-      // Fetch exercises
       let exercises: Exercise[] = [];
       try {
         const exercisesResponse = await fetch(buildUrl("/api/exercises"), {
@@ -241,7 +227,6 @@ export default function StudentDashboard() {
         console.error("Error fetching exercises:", error);
       }
 
-      // Fetch quizzes - Using the same pattern as your example
       let quizzes: Quiz[] = [];
       try {
         const quizzesResponse = await fetch(buildUrl("/api/quizzes"), {
@@ -254,8 +239,6 @@ export default function StudentDashboard() {
         if (quizzesResponse.ok) {
           const data = await quizzesResponse.json();
           console.log("Data quiz dari API:", data);
-
-          // Handle different response formats like in your example
           if (data && !Array.isArray(data)) {
             if (data.data && Array.isArray(data.data)) {
               quizzes = data.data;
@@ -468,58 +451,6 @@ export default function StudentDashboard() {
         quizAverageScore,
       });
 
-      // Fetch teachers (users with teacher role)
-      let teachers: Teacher[] = [];
-      try {
-        const teachersResponse = await fetch(buildUrl("/api/user"), {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-          },
-        });
-
-        if (teachersResponse.ok) {
-          const userData = await teachersResponse.json();
-          // For now, we'll create mock teachers data since we need to implement proper teacher fetching
-          teachers = [
-            {
-              id: 1,
-              name: "Dr. Sarah Johnson",
-              email: "sarah@example.com",
-              materials_count: 5,
-              exercises_count: 3,
-              quizzes_count: 2,
-            },
-            {
-              id: 2,
-              name: "Prof. Ahmad Rahman",
-              email: "ahmad@example.com",
-              materials_count: 4,
-              exercises_count: 6,
-              quizzes_count: 3,
-            },
-            {
-              id: 3,
-              name: "Ms. Lisa Chen",
-              email: "lisa@example.com",
-              materials_count: 3,
-              exercises_count: 4,
-              quizzes_count: 2,
-            },
-            {
-              id: 4,
-              name: "Mr. David Wilson",
-              email: "david@example.com",
-              materials_count: 6,
-              exercises_count: 2,
-              quizzes_count: 4,
-            },
-          ];
-        }
-      } catch (error) {
-        console.error("Error fetching teachers:", error);
-      }
-
       // Convert student progress to recent activities
       const recentActivities: RecentActivity[] = studentProgress
         .slice(0, 10)
@@ -558,7 +489,6 @@ export default function StudentDashboard() {
           percentage: quizzesPercentage,
           items: quizzes,
         },
-        teachers,
         recent_activities: recentActivities,
       };
 
@@ -746,7 +676,6 @@ export default function StudentDashboard() {
           </Card>
         </div>
 
-        {/* Discover Materials Section */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-slate-800">Materi</h2>
@@ -786,17 +715,14 @@ export default function StudentDashboard() {
                       <h3 className="font-semibold text-slate-800 line-clamp-2 leading-tight">
                         {material.title}
                       </h3>
-                      <p className="text-sm text-slate-600 line-clamp-2">
-                        {material.description}
-                      </p>
                       <div className="flex items-center space-x-2">
                         <Avatar className="h-6 w-6 mb-1">
                           <AvatarFallback className="text-xs bg-blue-100 text-blue-600">
-                            {getInitials(material.creator.name)}
+                          {getInitials(material.creator.name)}
                           </AvatarFallback>
                         </Avatar>
                         <span className="text-xs text-slate-500 mb-1">
-                          {material.creator.name}
+                          Pendamping: {material.creator.name}
                         </span>
                       </div>
                       <Link href={`/student/materials/${material.id}`}>
@@ -823,7 +749,6 @@ export default function StudentDashboard() {
           </div>
         </div>
 
-        {/* Recent Activities Section */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-slate-800">

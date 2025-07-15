@@ -32,11 +32,9 @@ export default function ForgotPasswordPage() {
       })
       return
     }
-
     setIsLoading(true)
     setShowModal(true)
     setModalState("sending")
-
     try {
       const response = await fetch(buildUrl("/api/password/forgot"), {
         method: "POST",

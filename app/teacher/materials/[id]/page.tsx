@@ -159,7 +159,7 @@ export default function MaterialDetail({
           title: "Video berhasil dihapus",
           description: "Video telah dihapus dari materi.",
         });
-        fetchMaterial(); // Refresh data
+        fetchMaterial();
       } else {
         toast({
           title: "Error",

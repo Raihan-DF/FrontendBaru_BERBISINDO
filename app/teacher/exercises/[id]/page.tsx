@@ -88,7 +88,6 @@ export default function ExerciseDetail({
   const fetchExercise = async () => {
     try {
       const token = localStorage.getItem("token");
-
       if (!token) {
         toast({
           title: "Error",
@@ -98,7 +97,6 @@ export default function ExerciseDetail({
         router.push("/login");
         return;
       }
-
       const response = await fetch(
         buildUrl(`/api/exercises/${resolvedParams.id}`),
         {
@@ -108,7 +106,6 @@ export default function ExerciseDetail({
           },
         }
       );
-
       if (response.status === 401) {
         toast({
           title: "Session Expired",

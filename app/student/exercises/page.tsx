@@ -255,7 +255,7 @@ function ExerciseGrid({
       {totalPages > 1 && (
         <div className="flex items-center justify-between bg-white dark:bg-slate-800 rounded-lg p-3 sm:p-4 shadow-sm">
           <div className="text-sm text-gray-600 dark:text-gray-400">
-            Halaman {currentPage} dari {totalPages} ({exercises.length} total)
+            Halaman {currentPage} dari {totalPages}
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -375,9 +375,9 @@ function ExerciseCard({ exercise }: { exercise: Exercise }) {
             {getStatusBadge()}
           </div>
 
-          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1">
+          {/* <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1">
             {exercise.material?.title || "No Material"}
-          </p>
+          </p> */}
 
           <div className="space-y-2 mb-3">
             <Progress value={exercise.is_completed ? 100 : progressPercentage} className="h-2" />

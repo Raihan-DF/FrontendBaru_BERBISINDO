@@ -230,7 +230,6 @@ export default function TeacherMaterials() {
                   >
                     <CardHeader>
                       <div className="flex items-start justify-between gap-3">
-                        {/* Title section */}
                         <div className="flex-1 min-w-0">
                           <Link href={`/teacher/materials/${material.id}`}>
                             <CardTitle className="text-sm sm:text-base font-semibold break-words line-clamp-2 leading-snug text-ellipsis overflow-hidden">
@@ -238,8 +237,6 @@ export default function TeacherMaterials() {
                             </CardTitle>
                           </Link>
                         </div>
-
-                        {/* Badge section */}
                         <div className="flex flex-col gap-1 items-end flex-shrink-0">
                           <Badge
                             className={getDifficultyColor(
@@ -256,7 +253,6 @@ export default function TeacherMaterials() {
                         </div>
                       </div>
                     </CardHeader>
-
                     <CardContent>
                       <div className="aspect-video rounded-md bg-muted mb-3 overflow-hidden">
                         <Link href={`/teacher/materials/${material.id}`}>

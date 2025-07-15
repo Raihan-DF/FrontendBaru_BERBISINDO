@@ -101,20 +101,15 @@ export default function RegisterPage() {
         password_confirmation: formData.confirmPassword,
         role,
       })
-
-      // Registration successful - cast data to RegistrationResponse
       const registrationResponse: RegistrationResponse = {
         message: data.message,
         user: data.user,
         role: data.role,
         verification_required: data.verification_required,
       }
-
       setRegistrationData(registrationResponse)
       setShowVerificationModal(true)
       setVerificationStep("sending")
-
-      // Simulate email sending process
       setTimeout(() => {
         setVerificationStep("sent")
       }, 2000)
@@ -138,10 +133,6 @@ export default function RegisterPage() {
 
   const handleCloseModal = () => {
     setShowVerificationModal(false)
-    // Redirect to verification page with email
-    // if (registrationData) {
-    //   window.location.href = `/auth/verify-email?email=${encodeURIComponent(registrationData.user.email)}`
-    // }
     window.location.href = "/login"
   }
 
@@ -170,13 +161,11 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen bg-muted/40 relative">
-      {/* Logo positioned absolutely at top-left with proper spacing */}
       <Link href="/" className="absolute left-4 top-4 md:left-8 md:top-8 flex items-center gap-2 z-10">
         <GraduationCap className="h-6 w-6 text-primary" />
         <span className="text-xl font-bold">BERBISINDO</span>
       </Link>
 
-      {/* Main content container */}
       <div className="flex min-h-screen items-center justify-center p-4 pt-20 md:pt-4">
         <Card className="w-full max-w-md">
           <CardHeader className="space-y-1">
@@ -266,24 +255,6 @@ export default function RegisterPage() {
                   </Button>
                 </div>
               </div>
-
-              {/* <div className="space-y-2">
-                <Label>Daftar Sebagai</Label>
-                <RadioGroup value={role} onValueChange={setRole} className="flex gap-6" disabled={isLoading}>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="student" id="student" />
-                    <Label htmlFor="student" className="cursor-pointer">
-                      pengguna
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="teacher" id="teacher" />
-                    <Label htmlFor="teacher" className="cursor-pointer">
-                      Pendamping
-                    </Label>
-                  </div>
-                </RadioGroup>
-              </div> */}
             </CardContent>
 
             <CardFooter className="flex flex-col space-y-4">

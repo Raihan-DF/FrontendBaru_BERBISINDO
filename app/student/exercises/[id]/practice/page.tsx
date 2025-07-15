@@ -287,7 +287,6 @@ export default function ExercisePracticePage() {
     return buildUrl(`/exercise-video/${exercise?.id}/${question.id}`)
   }
 
-  // SIMPLIFIED: Video event handlers like materials
   const handleVideoPlay = () => {
     setIsVideoPlaying(true)
   }

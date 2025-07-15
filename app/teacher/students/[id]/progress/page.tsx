@@ -176,13 +176,6 @@ export default function StudentDetailProgressPage() {
         });
         return;
       }
-
-      // const apiUrl = `${
-      //   process.env.NEXT_PUBLIC_API_URL || "https://50ab-125-165-214-242.ngrok-free.app "
-      // }/api/teacher/students/${studentId}/progress`;
-
-      // console.log("Fetching student progress from:", apiUrl);
-
       const response = await fetch(buildUrl(`/api/teacher/students/${studentId}/progress`), {
         headers: {
           Authorization: `Bearer ${token}`,

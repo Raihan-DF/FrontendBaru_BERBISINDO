@@ -87,8 +87,6 @@ export default function VideoDetailPage({
         router.push("/login");
         return;
       }
-
-      // Fetch material info
       const materialResponse = await fetch(
         buildUrl(`/api/materials/${resolvedParams.id}`),
         {
@@ -103,8 +101,6 @@ export default function VideoDetailPage({
         const materialData = await materialResponse.json();
         setMaterial(materialData);
       }
-
-      // Fetch video info
       const videoResponse = await fetch(
         buildUrl(
           `/api/materials/${resolvedParams.id}/videos/${resolvedParams.videoId}`
@@ -131,14 +127,14 @@ export default function VideoDetailPage({
       if (videoResponse.ok) {
         const videoData = await videoResponse.json();
         setVideo(videoData);
-        console.log("✅ Video data loaded:", videoData);
+        console.log(" Video data loaded:", videoData);
       } else {
         const errorData = await videoResponse.text();
-        console.error("❌ Video fetch error:", videoResponse.status, errorData);
+        console.error(" Video fetch error:", videoResponse.status, errorData);
         setError(`Gagal memuat data video (${videoResponse.status})`);
       }
     } catch (error) {
-      console.error("💥 Fetch error:", error);
+      console.error(" Fetch error:", error);
       setError("Terjadi kesalahan saat memuat data video");
     } finally {
       setLoading(false);
@@ -353,10 +349,6 @@ export default function VideoDetailPage({
               </div>
             </div>
             <div className="flex gap-2">
-              {/* <Button variant="outline" size="sm" onClick={testVideoUrls}>
-            <TestTube className="h-4 w-4 mr-2" />
-            Test URLs
-          </Button> */}
               <Link
                 href={`/teacher/materials/${resolvedParams.id}/videos/${resolvedParams.videoId}/edit`}
               >
@@ -500,44 +492,6 @@ export default function VideoDetailPage({
                       Browser Anda tidak mendukung video player.
                     </video>
                   </div>
-
-                  {/* Debug Info */}
-                  {/* <div className="mt-4 p-3 bg-gray-50 rounded-md text-xs space-y-2">
-                <div className="font-medium text-gray-700">🔧 Debug Information:</div>
-                <div className="grid grid-cols-1 gap-1">
-                  <p>
-                    <strong>🎯 Primary URL:</strong>{" "}
-                    <a
-                      href={getVideoDirectUrl()}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline"
-                    >
-                      {getVideoDirectUrl()}
-                    </a>
-                  </p>
-                  <p>
-                    <strong>📡 Fallback URL:</strong>{" "}
-                    <a
-                      href={getVideoStreamUrl()}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline"
-                    >
-                      {getVideoStreamUrl()}
-                    </a>
-                  </p>
-                  <p>
-                    <strong>📂 Video Path:</strong> {video.video_path}
-                  </p>
-                  <p>
-                    <strong>📄 Filename:</strong> {video.video_filename}
-                  </p>
-                  <p>
-                    <strong>🎬 Type:</strong> {video.video_type}
-                  </p>
-                </div>
-              </div> */}
                 </CardContent>
               </Card>
             </div>

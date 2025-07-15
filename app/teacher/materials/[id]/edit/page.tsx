@@ -129,13 +129,13 @@ export default function EditMaterial({
       submitData.append("description", formData.description);
       submitData.append("difficulty_level", formData.difficulty_level);
       submitData.append("is_published", formData.is_published ? "1" : "0");
-      submitData.append("_method", "PUT"); // Laravel method spoofing
+      submitData.append("_method", "PUT");
       if (thumbnail) submitData.append("thumbnail", thumbnail);
 
       const response = await fetch(
         buildUrl(`/api/materials/${resolvedParams.id}`),
         {
-          method: "POST", // Use POST with _method=PUT for Laravel
+          method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
             Accept: "application/json",

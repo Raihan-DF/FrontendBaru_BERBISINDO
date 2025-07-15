@@ -478,7 +478,6 @@ export default function EditVideo({
         setLoading(false)
       })
 
-      // Send request - Use POST with _method=PUT for Laravel
       xhr.open("POST", buildUrl(`/api/materials/${resolvedParams.id}/videos/${resolvedParams.videoId}`))
       xhr.setRequestHeader("Authorization", `Bearer ${token}`)
       xhr.setRequestHeader("Accept", "application/json")

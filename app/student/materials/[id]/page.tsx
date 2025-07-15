@@ -106,7 +106,6 @@ export default function StudentMaterialDetail({
         router.push("/login");
         return;
       }
-
       const response = await fetch(
         buildUrl(`/api/materials/${resolvedParams.id}`),
         {
@@ -116,7 +115,6 @@ export default function StudentMaterialDetail({
           },
         }
       );
-
       if (response.status === 401) {
         toast({
           title: "Session Expired",
@@ -127,12 +125,10 @@ export default function StudentMaterialDetail({
         router.push("/login");
         return;
       }
-
       if (response.ok) {
         const data = await response.json();
         setMaterial(data);
 
-        // Select the first video by default if available
         if (data.videos && data.videos.length > 0) {
           const sortedVideos = [...data.videos].sort(
             (a, b) => a.order - b.order
@@ -218,10 +214,8 @@ export default function StudentMaterialDetail({
     }
   };
 
-  // Generate video URLs
   const getVideoDirectUrl = (video: MaterialVideo) => {
     if (video?.video_path) {
-      // Parse video path: material_videos/1/1748173170_huruf-a.mp4
       const pathParts = video.video_path.split("/");
       const materialId = pathParts[1] || resolvedParams.id;
       const filename = pathParts[2] || video.video_filename;
@@ -236,70 +230,6 @@ export default function StudentMaterialDetail({
       `/api/materials/${resolvedParams.id}/videos/${video.id}/stream?token=${token}`
     );
   };
-
-  // Test video URLs
-  // const testVideoUrls = async () => {
-  //   if (!selectedVideo) return
-
-  //   const directUrl = getVideoDirectUrl(selectedVideo)
-  //   const streamUrl = getVideoStreamUrl(selectedVideo)
-
-  //   console.log("🧪 Testing Video URLs")
-  //   console.log("📁 Direct URL:", directUrl)
-  //   console.log("📡 Stream URL:", streamUrl)
-
-  //   let workingUrls = 0
-  //   let totalUrls = 0
-
-  //   // Test direct URL
-  //   if (directUrl) {
-  //     totalUrls++
-  //     try {
-  //       const directResponse = await fetch(directUrl, {
-  //         method: "HEAD",
-  //         mode: "cors",
-  //       })
-  //       console.log("✅ Direct response:", directResponse.status, directResponse.statusText)
-
-  //       if (directResponse.ok) {
-  //         workingUrls++
-  //         console.log("✅ Direct URL working")
-  //       } else {
-  //         console.log("❌ Direct URL failed:", directResponse.status)
-  //       }
-  //     } catch (error) {
-  //       console.log("❌ Direct URL CORS/Network error (this is normal):", error)
-  //     }
-  //   }
-
-  //   // Test stream URL
-  //   totalUrls++
-  //   try {
-  //     const token = localStorage.getItem("token")
-  //     const streamResponse = await fetch(streamUrl, {
-  //       method: "HEAD",
-  //       headers: {
-  //         Authorization: `Bearer ${token}`,
-  //       },
-  //     })
-  //     console.log("✅ Stream response:", streamResponse.status, streamResponse.statusText)
-
-  //     if (streamResponse.ok) {
-  //       workingUrls++
-  //       console.log("✅ Stream URL working")
-  //     } else {
-  //       console.log("❌ Stream URL failed:", streamResponse.status)
-  //     }
-  //   } catch (error) {
-  //     console.log("❌ Stream URL error:", error)
-  //   }
-
-  //   // Only show toast if we want to inform user
-  //   toast({
-  //     title: "URL Test Complete",
-  //     description: `Tested ${totalUrls} URLs. Check console for details.`,
-  //   })
-  // }
 
   const getDifficultyLabel = (level: number) => {
     const labels = ["", "Pemula", "Dasar", "Menengah", "Lanjut", "Ahli"];
@@ -488,16 +418,13 @@ export default function StudentMaterialDetail({
                           >
                             Coba Lagi
                           </Button>
-                          {/* <Button variant="outline" size="sm" onClick={testVideoUrls}>
-                            Test URLs
-                          </Button> */}
                         </div>
                       </div>
                     </div>
                   )}
 
                   <video
-                    key={selectedVideo.id} // Add this line
+                    key={selectedVideo.id}
                     className="w-full h-full"
                     controls
                     preload="metadata"
@@ -511,10 +438,6 @@ export default function StudentMaterialDetail({
                     onCanPlay={() => {
                       console.log("✅ Video can play:", selectedVideo.title);
                       setVideoLoading(false);
-                      // toast({
-                      //   title: "Video Ready! ✅",
-                      //   description: `${selectedVideo.title} berhasil dimuat dan siap diputar`,
-                      // });
                     }}
                     onError={(e) => {
                       console.error(
@@ -524,22 +447,14 @@ export default function StudentMaterialDetail({
                       );
                       setVideoError("Video gagal dimuat");
                       setVideoLoading(false);
-                      // toast({
-                      //   title: "Video Error ❌",
-                      //   description: `${selectedVideo.title} gagal dimuat. Coba refresh halaman atau test URLs.`,
-                      //   variant: "destructive",
-                      // });
                     }}
-                    // Remove the onEnded event handler completely
                     crossOrigin="anonymous"
                     title={selectedVideo.title}
                   >
-                    {/* Primary source - Direct URL with CORS headers */}
                     <source
                       src={getVideoDirectUrl(selectedVideo)}
                       type={selectedVideo.video_type || "video/mp4"}
                     />
-                    {/* Fallback source - Stream URL */}
                     <source
                       src={getVideoStreamUrl(selectedVideo)}
                       type={selectedVideo.video_type || "video/mp4"}
@@ -579,10 +494,6 @@ export default function StudentMaterialDetail({
                       </Badge>
                     )}
                   </div>
-                  {/* <Button variant="ghost" size="sm" onClick={testVideoUrls} className="text-xs">
-                    <TestTube className="h-3 w-3 mr-1" />
-                    Debug
-                  </Button> */}
                 </div>
               </CardContent>
             </Card>

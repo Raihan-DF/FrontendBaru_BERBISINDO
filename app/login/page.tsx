@@ -108,7 +108,6 @@ export default function LoginPage() {
     return true;
   };
 
-
   // Show loading spinner if auth is still loading
   if (loading) {
     return (
@@ -156,8 +155,8 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
               <div className="relative">
-                <Label htmlFor="password">Password</Label>
                 <Input
                   id="password"
                   name="password"
@@ -167,51 +166,30 @@ export default function LoginPage() {
                   value={formData.password}
                   onChange={handleInputChange}
                   disabled={isLoading}
+                  className="pr-10 h-10" // Pastikan tinggi konsisten
                 />
-                <Button
+                <button
                   type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                   onClick={() => setShowPassword(!showPassword)}
                   disabled={isLoading}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground"
                 >
                   {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
+                    <EyeOff className="h-5 w-5" />
                   ) : (
-                    <Eye className="h-4 w-4" />
+                    <Eye className="h-5 w-5" />
                   )}
-                </Button>
-              </div>
-              <div className="flex items-center justify-end">
-                <Link
-                  href="/auth/forgot-password"
-                  className="text-sm text-blue-600 hover:underline"
-                >
-                  Lupa password?
-                </Link>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="remember"
-                  checked={rememberMe}
-                  onCheckedChange={(checked) =>
-                    setRememberMe(checked as boolean)
-                  }
-                  disabled={isLoading}
-                />
-                <Label
-                  htmlFor="remember"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  Ingat saya
-                </Label>
+                </button>
               </div>
             </div>
           </CardContent>
 
           <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full bg-gradient-to-r from-blue-500 to-blue-800 text-white hover:from-blue-600 hover:to-blue-900" disabled={isLoading}>
+            <Button
+              type="submit"
+              className="w-full bg-gradient-to-r from-blue-500 to-blue-800 text-white hover:from-blue-600 hover:to-blue-900"
+              disabled={isLoading}
+            >
               {isLoading ? (
                 <div className="flex items-center gap-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
@@ -224,7 +202,7 @@ export default function LoginPage() {
 
             <div className="text-center text-sm">
               Belum memiliki akun?{" "}
-              <Link href="/register" className="text-primary hover:underline">
+              <Link href="/register" className="text-primary hover:underline font-medium">
                 Daftar
               </Link>
             </div>

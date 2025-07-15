@@ -289,12 +289,10 @@ export default function CreateQuiz() {
         router.push("/login");
         return;
       }
-
-      // Clean all option texts before submitting
       const cleanedQuestions = questions.map((q) => ({
         ...q,
         material_video_id: Number.parseInt(q.material_video_id),
-        options: q.options.map((option) => option.trim()), // Clean each option
+        options: q.options.map((option) => option.trim()),
       }));
 
       const response = await fetch(buildUrl("/api/quizzes"), {

@@ -72,12 +72,6 @@ export default function TeacherQuizzes() {
         },
       });
 
-      console.log("📡 Response status:", response.status);
-      console.log(
-        "📋 Response headers:",
-        Object.fromEntries(response.headers.entries())
-      );
-
       if (response.ok) {
         const data = await response.json();
         console.log("📊 Raw API response:", data);

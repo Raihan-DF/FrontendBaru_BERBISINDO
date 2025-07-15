@@ -166,10 +166,6 @@ export default function TeacherDashboard() {
     if (!token) throw new Error("No token found");
 
     try {
-      console.log(
-        "🔍 Fetching students progress from /api/teacher/students/progress..."
-      );
-
       const response = await fetch(buildUrl("/api/teacher/students/progress"), {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -196,7 +192,6 @@ export default function TeacherDashboard() {
       const result = await response.json();
       console.log("📊 Students progress data:", result);
 
-      // Return array directly since it's an array of StudentProgress
       return Array.isArray(result) ? result : [];
     } catch (error) {
       console.warn("Students endpoint error:", error);
@@ -204,13 +199,11 @@ export default function TeacherDashboard() {
     }
   };
 
-  // Fungsi untuk fetch data quizzes dengan handling yang benar
   const fetchQuizzes = async () => {
     const token = localStorage.getItem("token");
     if (!token) throw new Error("No token found");
 
     try {
-      console.log("🔍 Fetching quizzes...");
 
       const response = await fetch(buildUrl("/api/quizzes"), {
         headers: {
@@ -218,8 +211,6 @@ export default function TeacherDashboard() {
           Accept: "application/json",
         },
       });
-
-      console.log("📡 Quizzes response status:", response.status);
 
       if (response.status === 401) {
         localStorage.removeItem("token");
@@ -236,9 +227,6 @@ export default function TeacherDashboard() {
       }
 
       const result = await response.json();
-      console.log("📊 Raw quiz data:", result);
-
-      // Quiz endpoint returns direct array, not wrapped in data object
       return Array.isArray(result) ? result : [];
     } catch (error) {
       console.warn("Quiz endpoint error:", error);
@@ -296,18 +284,14 @@ export default function TeacherDashboard() {
         return;
       }
 
-      console.log("🚀 Starting dashboard data fetch...");
-
-      // Fetch semua data secara paralel dengan error handling individual
       const [materialsResult, exercisesResult, quizzesResult, studentsResult] =
         await Promise.allSettled([
           fetchWithAuth("/api/materials"),
           fetchWithAuth("/api/exercises"),
-          fetchQuizzes(), // Custom function for quiz handling
-          fetchStudents(), // Custom function for students handling
+          fetchQuizzes(),
+          fetchStudents(),
         ]);
 
-      // Extract data dari results dengan logging
       const materialsData =
         materialsResult.status === "fulfilled"
           ? materialsResult.value
@@ -328,7 +312,6 @@ export default function TeacherDashboard() {
         students: studentsData,
       });
 
-      // Hitung pertumbuhan (simulasi - bisa disesuaikan dengan logika backend)
       const calculateGrowth = (items: any[]) => {
         if (!items || !Array.isArray(items)) return 0;
         const thirtyDaysAgo = new Date();
@@ -344,7 +327,6 @@ export default function TeacherDashboard() {
         }).length;
       };
 
-      // Format data sesuai dengan interface
       const formattedData: TeacherDashboardData = {
         materials: {
           total: materialsData?.data?.length || 0,
@@ -527,7 +509,6 @@ export default function TeacherDashboard() {
             </div>
           </div>
 
-          {/* Stats Cards - Softer Colors */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
               <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-10 translate-x-10"></div>
@@ -552,7 +533,6 @@ export default function TeacherDashboard() {
                 </div>
               </CardContent>
             </Card>
-
             <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
               <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-10 translate-x-10"></div>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

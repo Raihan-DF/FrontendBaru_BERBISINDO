@@ -683,10 +683,6 @@ export default function TeacherDashboard() {
                             <div className="space-y-2 text-sm text-muted-foreground">
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-1">
-                                  <BookOpen className="h-4 w-4" />
-                                  <span>
-                                    {material.videos_count || 0} video
-                                  </span>
                                 </div>
                                 <div className="flex items-center gap-1">
                                   <Calendar className="h-4 w-4" />

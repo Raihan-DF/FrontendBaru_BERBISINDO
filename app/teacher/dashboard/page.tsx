@@ -524,13 +524,13 @@ export default function TeacherDashboard() {
                 <div className="text-3xl font-bold mb-2">
                   {dashboardData.materials?.total || 0}
                 </div>
-                <div className="flex items-center gap-2">
+                {/* <div className="flex items-center gap-2">
                   <Badge className="bg-white/20 text-white hover:bg-white/30">
                     <TrendingUp className="w-3 h-3 mr-1" />+
                     {dashboardData.materials?.recent_growth || 0}
                   </Badge>
                   <span className="text-xs text-blue-200">bulan ini</span>
-                </div>
+                </div> */}
               </CardContent>
             </Card>
             <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
@@ -547,13 +547,13 @@ export default function TeacherDashboard() {
                 <div className="text-3xl font-bold mb-2">
                   {dashboardData.exercises?.total || 0}
                 </div>
-                <div className="flex items-center gap-2">
+                {/* <div className="flex items-center gap-2">
                   <Badge className="bg-white/20 text-white hover:bg-white/30">
                     <TrendingUp className="w-3 h-3 mr-1" />+
                     {dashboardData.exercises?.recent_growth || 0}
                   </Badge>
                   <span className="text-xs text-green-200">bulan ini</span>
-                </div>
+                </div> */}
               </CardContent>
             </Card>
 
@@ -571,13 +571,13 @@ export default function TeacherDashboard() {
                 <div className="text-3xl font-bold mb-2">
                   {dashboardData.quizzes?.total || 0}
                 </div>
-                <div className="flex items-center gap-2">
+                {/* <div className="flex items-center gap-2">
                   <Badge className="bg-white/20 text-white hover:bg-white/30">
                     <TrendingUp className="w-3 h-3 mr-1" />+
                     {dashboardData.quizzes?.recent_growth || 0}
                   </Badge>
                   <span className="text-xs text-purple-200">bulan ini</span>
-                </div>
+                </div> */}
               </CardContent>
             </Card>
 
@@ -595,13 +595,13 @@ export default function TeacherDashboard() {
                 <div className="text-3xl font-bold mb-2">
                   {dashboardData.students?.total || 0}
                 </div>
-                <div className="flex items-center gap-2">
+                {/* <div className="flex items-center gap-2">
                   <Badge className="bg-white/20 text-white hover:bg-white/30">
                     <TrendingUp className="w-3 h-3 mr-1" />+
                     {dashboardData.students?.recent_growth || 0}
                   </Badge>
                   <span className="text-xs text-orange-200">bulan ini</span>
-                </div>
+                </div> */}
               </CardContent>
             </Card>
           </div>
@@ -629,9 +629,9 @@ export default function TeacherDashboard() {
                 className="space-y-6"
               >
                 <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="materials">Materi Terbaru</TabsTrigger>
-                  <TabsTrigger value="exercises">Latihan Terbaru</TabsTrigger>
-                  <TabsTrigger value="quizzes">Quiz Terbaru</TabsTrigger>
+                  <TabsTrigger value="materials">Materi</TabsTrigger>
+                  <TabsTrigger value="exercises">Latihan</TabsTrigger>
+                  <TabsTrigger value="quizzes">Quiz</TabsTrigger>
                 </TabsList>
 
                 {/* Tab Materi */}

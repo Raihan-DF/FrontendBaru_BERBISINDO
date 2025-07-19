@@ -244,7 +244,7 @@ export default function StudentsProgressPage() {
                   <div className="absolute inset-0 w-16 h-16 border-4 border-transparent rounded-full animate-ping border-t-blue-400"></div>
                 </div>
                 <p className="text-blue-600 font-medium">
-                  Memuat data progress pengguna...
+                  Memuat data progress pembelajar...
                 </p>
               </div>
             </div>
@@ -310,10 +310,10 @@ export default function StudentsProgressPage() {
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">
                   {" "}
-                  Progress Pengguna
+                  Progress Pembelajar
                 </h1>
                 <p className="text-gray-600 mt-1">
-                  Pemantauan perjalanan belajar pengguna
+                  Pemantauan perjalanan belajar pembelajar
                 </p>
                 {user && (
                   <div className="flex items-center gap-2 mt-2">
@@ -342,16 +342,16 @@ export default function StudentsProgressPage() {
           <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white border-0">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-blue-100">
-                Total Pengguna
+                Total Pembelajar
               </CardTitle>
               <Users className="h-5 w-5 text-blue-200" />
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{totalStudents}</div>
-              <p className="text-xs text-blue-200 flex items-center gap-1 mt-1">
+              {/* <p className="text-xs text-blue-200 flex items-center gap-1 mt-1">
                 <TrendingUp className="h-3 w-3" />
                 {activeStudents} active recently
-              </p>
+              </p> */}
             </CardContent>
           </Card>
 
@@ -409,9 +409,9 @@ export default function StudentsProgressPage() {
                 <Users className="h-5 w-5 text-gray-600" />
               </div>
               <div>
-                <CardTitle className="text-xl">List Pengguna</CardTitle>
+                <CardTitle className="text-xl">List Pembelajar</CardTitle>
                 <CardDescription>
-                  Melihat dan mengelola kemajuan pengguna secara individu
+                  Melihat dan mengelola kemajuan pembelajar secara individu
                 </CardDescription>
               </div>
             </div>

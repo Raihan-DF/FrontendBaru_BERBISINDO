@@ -182,6 +182,14 @@ export default function LoginPage() {
                 </button>
               </div>
             </div>
+            <div className="flex items-end justify-end">
+                <Link
+                  href="auth/forgot-password"
+                  className="text-blue-500 hover:underline text-sm"
+                >
+                  Lupa Password?
+                </Link>
+              </div>
           </CardContent>
 
           <CardFooter className="flex flex-col space-y-4">
@@ -202,7 +210,10 @@ export default function LoginPage() {
 
             <div className="text-center text-sm">
               Belum memiliki akun?{" "}
-              <Link href="/register" className="text-primary hover:underline font-medium">
+              <Link
+                href="/register"
+                className="text-blue-500 hover:underline font-medium"
+              >
                 Daftar
               </Link>
             </div>
